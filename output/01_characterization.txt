@@ -1,0 +1,118 @@
+CORPUS CHARACTERIZATION  (1000 documents)
+============================================================
+chars/doc:  min=2543  median=48247  max=816980
+sents/doc:  median=260
+
+Top TF-IDF terms (corpus-salient vocabulary):
+  0.0561  fig
+  0.0300  mice
+  0.0266  tumor
+  0.0223  patients
+  0.0217  il
+  0.0194  cancer
+  0.0186  mab
+  0.0176  cov
+  0.0168  sars
+  0.0164  sars cov
+  0.0162  cat
+  0.0156  infection
+  0.0154  mabs
+  0.0149  note
+  0.0149  virus
+  0.0139  supplementary
+  0.0137  catalog
+  0.0136  catalog number
+  0.0134  covid
+  0.0133  gfp
+  0.0130  viral
+  0.0128  inflammatory
+  0.0128  covid 19
+  0.0128  add
+  0.0125  blood
+  0.0124  wt
+  0.0121  media
+  0.0120  usa
+  0.0120  differentiation
+  0.0115  antigen
+  0.0114  plate
+  0.0112  liver
+  0.0109  mrna
+  0.0109  ms
+  0.0106  brain
+  0.0103  organoids
+  0.0101  lung
+  0.0100  product
+  0.0099  seq
+  0.0097  therapy
+  0.0097  vaccine
+  0.0095  macrophages
+  0.0095  2020
+  0.0095  pd
+  0.0094  µl
+  0.0094  stress
+  0.0093  tube
+  0.0091  delivery
+  0.0091  elisa
+  0.0090  wash
+  0.0090  sequencing
+  0.0089  cell lines
+  0.0089  igg
+  0.0089  2021
+  0.0088  patient
+  0.0088  western
+  0.0088  efficacy
+  0.0087  gel
+  0.0087  incubate
+  0.0086  glucose
+
+Most frequent noun-chunk heads (candidate entity anchors):
+   2785  cells
+   2278  that
+   1118  analysis
+   1050  expression
+    908  data
+    778  samples
+    738  levels
+    735  results
+    673  proteins
+    598  they
+    484  activity
+    467  genes
+    460  effect
+    422  number
+    419  antibodies
+    415  studies
+    374  study
+    367  role
+    367  solution
+    358  note
+    350  method
+    347  effects
+    346  methods
+    336  protein
+    315  antibody
+    312  changes
+    306  protocol
+    293  concentration
+    292  function
+    287  system
+    283  increase
+    280  differences
+    270  mice
+    269  buffer
+    249  images
+    246  treatment
+    246  response
+    246  scientific
+    245  patients
+    241  time
+    240  production
+    240  model
+    234  values
+    223  table
+    220  assay
+    216  growth
+    215  lines
+    215  medium
+    213  process
+    212  content

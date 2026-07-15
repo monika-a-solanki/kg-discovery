@@ -1,0 +1,29 @@
+### START 10:54:56 ###
+#CORPUS CHACORPUS CHARACTERIZATION  (1000 documents)
+============================================================
+chars/doc:  min=2543  median=48247  max=816980
+sents/doc:  median=260
+
+Top TF-IDF terms (corpus-salient vocabulary):
+  0.0561  fig
+  0.0300  mice
+  0.0266  tumor
+  0.0223  patients
+  0.0217  il
+  0.0194  cancer
+  0.0186  mab
+  0.0176  cov
+  0.0168  sars
+  0.0164  sars cov
+  0.0162  cat
+  0.0156  infection
+  0.0154  mabs
+  0.0149  note
+  0.0149  virus
+  0.0139  supplementary
+  0.0137  catalog
+  0.0136  catalog number
+  0.0134  covid
+
+... full report -> /Users/monika.a.solanki/development/kg-discovery/output/01_characterization.txt
+### 02 10:58:09 ###

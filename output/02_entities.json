@@ -1,0 +1,1493 @@
+{
+  "ner_types": [
+    {
+      "label": "PROTEIN",
+      "count": 187462,
+      "examples": [
+        "antibodies",
+        "mabs",
+        "mab",
+        "il-6",
+        "monoclonal antibodies",
+        "cytokine",
+        "insulin",
+        "cytokines",
+        "pd-l1",
+        "igg"
+      ]
+    },
+    {
+      "label": "CHEMICAL",
+      "count": 100163,
+      "examples": [
+        "glucose",
+        "co2",
+        "ethanol",
+        "nacl",
+        "amino acid",
+        "sucrose",
+        "dmso",
+        "oxygen",
+        "calcium",
+        "cholesterol"
+      ]
+    },
+    {
+      "label": "DISEASE",
+      "count": 65810,
+      "examples": [
+        "tumor",
+        "cancer",
+        "infection",
+        "tumors",
+        "death",
+        "inflammation",
+        "toxicity",
+        "fibrosis",
+        "tumour",
+        "tnf-\u03b1"
+      ]
+    },
+    {
+      "label": "CELL_TYPE",
+      "count": 45277,
+      "examples": [
+        "macrophages",
+        "t cells",
+        "cancer cells",
+        "tumor cells",
+        "immune cells",
+        "microglia",
+        "astrocytes",
+        "hscs",
+        "cd8+ t cells",
+        "neutrophils"
+      ]
+    },
+    {
+      "label": "DNA",
+      "count": 44867,
+      "examples": [
+        "chromatin",
+        "cdna",
+        "differentially expressed genes",
+        "cas9",
+        "genomic dna",
+        "plasmid",
+        "plasmids",
+        "target genes",
+        "heterochromatin",
+        "star"
+      ]
+    },
+    {
+      "label": "CELL_LINE",
+      "count": 36948,
+      "examples": [
+        "cell lines",
+        "tcm",
+        "dcs",
+        "hek293t cells",
+        "cell line",
+        "hipscs",
+        "il-1\u03b2",
+        "hela cells",
+        "ihlcs",
+        "cho cells"
+      ]
+    },
+    {
+      "label": "RNA",
+      "count": 4237,
+      "examples": [
+        "mrna",
+        "mrnas",
+        "viral rna",
+        "5\u2032top mrnas",
+        "osk mrna",
+        "pou5f3 mrna",
+        "pou5f3 rna",
+        "rrna",
+        "stat3 mrna",
+        "fig. 3"
+      ]
+    }
+  ],
+  "emergent_clusters": [
+    {
+      "cluster": 10,
+      "total_freq": 86036,
+      "label_hint": "that",
+      "members": [
+        {
+          "term": "that",
+          "freq": 15612
+        },
+        {
+          "term": "number",
+          "freq": 4193
+        },
+        {
+          "term": "they",
+          "freq": 3978
+        },
+        {
+          "term": "solution",
+          "freq": 2603
+        },
+        {
+          "term": "changes",
+          "freq": 2179
+        },
+        {
+          "term": "note",
+          "freq": 1996
+        },
+        {
+          "term": "response",
+          "freq": 1941
+        },
+        {
+          "term": "medium",
+          "freq": 1681
+        },
+        {
+          "term": "time",
+          "freq": 1498
+        },
+        {
+          "term": "them",
+          "freq": 1466
+        },
+        {
+          "term": "level",
+          "freq": 1393
+        },
+        {
+          "term": "group",
+          "freq": 1381
+        }
+      ]
+    },
+    {
+      "cluster": 14,
+      "total_freq": 81076,
+      "label_hint": "analysis",
+      "members": [
+        {
+          "term": "analysis",
+          "freq": 6995
+        },
+        {
+          "term": "results",
+          "freq": 5497
+        },
+        {
+          "term": "studies",
+          "freq": 3478
+        },
+        {
+          "term": "activity",
+          "freq": 3156
+        },
+        {
+          "term": "study",
+          "freq": 2832
+        },
+        {
+          "term": "methods",
+          "freq": 2030
+        },
+        {
+          "term": "method",
+          "freq": 1981
+        },
+        {
+          "term": "findings",
+          "freq": 1808
+        },
+        {
+          "term": "approach",
+          "freq": 1744
+        },
+        {
+          "term": "scientific",
+          "freq": 1643
+        },
+        {
+          "term": "development",
+          "freq": 1621
+        },
+        {
+          "term": "responses",
+          "freq": 1584
+        }
+      ]
+    },
+    {
+      "cluster": 11,
+      "total_freq": 57931,
+      "label_hint": "expression",
+      "members": [
+        {
+          "term": "expression",
+          "freq": 7678
+        },
+        {
+          "term": "concentration",
+          "freq": 2229
+        },
+        {
+          "term": "function",
+          "freq": 2075
+        },
+        {
+          "term": "values",
+          "freq": 1741
+        },
+        {
+          "term": "increase",
+          "freq": 1680
+        },
+        {
+          "term": "rate",
+          "freq": 1383
+        },
+        {
+          "term": "volume",
+          "freq": 1266
+        },
+        {
+          "term": "size",
+          "freq": 1052
+        },
+        {
+          "term": "parameters",
+          "freq": 992
+        },
+        {
+          "term": "quantification",
+          "freq": 972
+        },
+        {
+          "term": "concentrations",
+          "freq": 971
+        },
+        {
+          "term": "differentiation",
+          "freq": 958
+        }
+      ]
+    },
+    {
+      "cluster": 22,
+      "total_freq": 50784,
+      "label_hint": "effects",
+      "members": [
+        {
+          "term": "effects",
+          "freq": 3472
+        },
+        {
+          "term": "effect",
+          "freq": 3217
+        },
+        {
+          "term": "efficacy",
+          "freq": 1852
+        },
+        {
+          "term": "differences",
+          "freq": 1848
+        },
+        {
+          "term": "potential",
+          "freq": 1724
+        },
+        {
+          "term": "stability",
+          "freq": 1211
+        },
+        {
+          "term": "ability",
+          "freq": 1209
+        },
+        {
+          "term": "impact",
+          "freq": 1203
+        },
+        {
+          "term": "factors",
+          "freq": 1178
+        },
+        {
+          "term": "conditions",
+          "freq": 1121
+        },
+        {
+          "term": "difference",
+          "freq": 1002
+        },
+        {
+          "term": "presence",
+          "freq": 966
+        }
+      ]
+    },
+    {
+      "cluster": 5,
+      "total_freq": 47159,
+      "label_hint": "data",
+      "members": [
+        {
+          "term": "data",
+          "freq": 6279
+        },
+        {
+          "term": "system",
+          "freq": 2418
+        },
+        {
+          "term": "protocol",
+          "freq": 2120
+        },
+        {
+          "term": "model",
+          "freq": 1991
+        },
+        {
+          "term": "binding",
+          "freq": 1443
+        },
+        {
+          "term": "table",
+          "freq": 1295
+        },
+        {
+          "term": "software",
+          "freq": 1271
+        },
+        {
+          "term": "models",
+          "freq": 1149
+        },
+        {
+          "term": "sequences",
+          "freq": 1084
+        },
+        {
+          "term": "sample",
+          "freq": 1030
+        },
+        {
+          "term": "systems",
+          "freq": 1018
+        },
+        {
+          "term": "components",
+          "freq": 785
+        }
+      ]
+    },
+    {
+      "cluster": 12,
+      "total_freq": 40140,
+      "label_hint": "cells",
+      "members": [
+        {
+          "term": "cells",
+          "freq": 18737
+        },
+        {
+          "term": "genes",
+          "freq": 2737
+        },
+        {
+          "term": "pathway",
+          "freq": 1249
+        },
+        {
+          "term": "pathways",
+          "freq": 1214
+        },
+        {
+          "term": "mutations",
+          "freq": 894
+        },
+        {
+          "term": "gene",
+          "freq": 779
+        },
+        {
+          "term": "phenotype",
+          "freq": 680
+        },
+        {
+          "term": "cell",
+          "freq": 676
+        },
+        {
+          "term": "strains",
+          "freq": 646
+        },
+        {
+          "term": "embryos",
+          "freq": 593
+        },
+        {
+          "term": "nuclei",
+          "freq": 521
+        },
+        {
+          "term": "transcription",
+          "freq": 520
+        }
+      ]
+    },
+    {
+      "cluster": 4,
+      "total_freq": 30465,
+      "label_hint": "role",
+      "members": [
+        {
+          "term": "role",
+          "freq": 3356
+        },
+        {
+          "term": "production",
+          "freq": 1623
+        },
+        {
+          "term": "authors",
+          "freq": 1544
+        },
+        {
+          "term": "growth",
+          "freq": 1314
+        },
+        {
+          "term": "efficiency",
+          "freq": 1231
+        },
+        {
+          "term": "media",
+          "freq": 1108
+        },
+        {
+          "term": "products",
+          "freq": 827
+        },
+        {
+          "term": "groups",
+          "freq": 824
+        },
+        {
+          "term": "technologies",
+          "freq": 822
+        },
+        {
+          "term": "culture",
+          "freq": 814
+        },
+        {
+          "term": "roles",
+          "freq": 594
+        },
+        {
+          "term": "technology",
+          "freq": 577
+        }
+      ]
+    },
+    {
+      "cluster": 19,
+      "total_freq": 29125,
+      "label_hint": "levels",
+      "members": [
+        {
+          "term": "levels",
+          "freq": 4917
+        },
+        {
+          "term": "buffer",
+          "freq": 1808
+        },
+        {
+          "term": "lines",
+          "freq": 1278
+        },
+        {
+          "term": "formation",
+          "freq": 1256
+        },
+        {
+          "term": "sections",
+          "freq": 899
+        },
+        {
+          "term": "progression",
+          "freq": 529
+        },
+        {
+          "term": "clusters",
+          "freq": 489
+        },
+        {
+          "term": "section",
+          "freq": 487
+        },
+        {
+          "term": "fragments",
+          "freq": 378
+        },
+        {
+          "term": "bands",
+          "freq": 343
+        },
+        {
+          "term": "network",
+          "freq": 339
+        },
+        {
+          "term": "clearance",
+          "freq": 318
+        }
+      ]
+    },
+    {
+      "cluster": 15,
+      "total_freq": 28843,
+      "label_hint": "staining",
+      "members": [
+        {
+          "term": "staining",
+          "freq": 1251
+        },
+        {
+          "term": "materials",
+          "freq": 972
+        },
+        {
+          "term": "acid",
+          "freq": 894
+        },
+        {
+          "term": "reaction",
+          "freq": 747
+        },
+        {
+          "term": "preparation",
+          "freq": 747
+        },
+        {
+          "term": "mixture",
+          "freq": 709
+        },
+        {
+          "term": "molecules",
+          "freq": 699
+        },
+        {
+          "term": "reactions",
+          "freq": 693
+        },
+        {
+          "term": "reagents",
+          "freq": 665
+        },
+        {
+          "term": "enrichment",
+          "freq": 622
+        },
+        {
+          "term": "compounds",
+          "freq": 561
+        },
+        {
+          "term": "residues",
+          "freq": 526
+        }
+      ]
+    },
+    {
+      "cluster": 21,
+      "total_freq": 27559,
+      "label_hint": "mechanisms",
+      "members": [
+        {
+          "term": "mechanisms",
+          "freq": 1399
+        },
+        {
+          "term": "interactions",
+          "freq": 1292
+        },
+        {
+          "term": "properties",
+          "freq": 1187
+        },
+        {
+          "term": "structure",
+          "freq": 933
+        },
+        {
+          "term": "types",
+          "freq": 664
+        },
+        {
+          "term": "abstract",
+          "freq": 635
+        },
+        {
+          "term": "structures",
+          "freq": 620
+        },
+        {
+          "term": "synthesis",
+          "freq": 612
+        },
+        {
+          "term": "variants",
+          "freq": 583
+        },
+        {
+          "term": "patterns",
+          "freq": 560
+        },
+        {
+          "term": "affinity",
+          "freq": 556
+        },
+        {
+          "term": "species",
+          "freq": 550
+        }
+      ]
+    },
+    {
+      "cluster": 16,
+      "total_freq": 22537,
+      "label_hint": "mice",
+      "members": [
+        {
+          "term": "mice",
+          "freq": 3149
+        },
+        {
+          "term": "plates",
+          "freq": 942
+        },
+        {
+          "term": "pellet",
+          "freq": 802
+        },
+        {
+          "term": "tissue",
+          "freq": 793
+        },
+        {
+          "term": "beads",
+          "freq": 764
+        },
+        {
+          "term": "tissues",
+          "freq": 706
+        },
+        {
+          "term": "animals",
+          "freq": 606
+        },
+        {
+          "term": "tubes",
+          "freq": 484
+        },
+        {
+          "term": "neurons",
+          "freq": 441
+        },
+        {
+          "term": "tube",
+          "freq": 432
+        },
+        {
+          "term": "lysates",
+          "freq": 413
+        },
+        {
+          "term": "flies",
+          "freq": 393
+        }
+      ]
+    },
+    {
+      "cluster": 17,
+      "total_freq": 22392,
+      "label_hint": "samples",
+      "members": [
+        {
+          "term": "samples",
+          "freq": 4504
+        },
+        {
+          "term": "experiments",
+          "freq": 1700
+        },
+        {
+          "term": "signal",
+          "freq": 1076
+        },
+        {
+          "term": "assays",
+          "freq": 899
+        },
+        {
+          "term": "detection",
+          "freq": 881
+        },
+        {
+          "term": "intensity",
+          "freq": 783
+        },
+        {
+          "term": "signals",
+          "freq": 760
+        },
+        {
+          "term": "sensitivity",
+          "freq": 691
+        },
+        {
+          "term": "microscope",
+          "freq": 534
+        },
+        {
+          "term": "anova",
+          "freq": 522
+        },
+        {
+          "term": "experiment",
+          "freq": 478
+        },
+        {
+          "term": "particles",
+          "freq": 450
+        }
+      ]
+    },
+    {
+      "cluster": 2,
+      "total_freq": 21921,
+      "label_hint": "activation",
+      "members": [
+        {
+          "term": "activation",
+          "freq": 1751
+        },
+        {
+          "term": "mechanism",
+          "freq": 1229
+        },
+        {
+          "term": "proliferation",
+          "freq": 1083
+        },
+        {
+          "term": "reduction",
+          "freq": 960
+        },
+        {
+          "term": "accumulation",
+          "freq": 776
+        },
+        {
+          "term": "degradation",
+          "freq": 597
+        },
+        {
+          "term": "procedure",
+          "freq": 533
+        },
+        {
+          "term": "overexpression",
+          "freq": 512
+        },
+        {
+          "term": "centrifuge",
+          "freq": 467
+        },
+        {
+          "term": "transfer",
+          "freq": 455
+        },
+        {
+          "term": "modifications",
+          "freq": 410
+        },
+        {
+          "term": "upregulation",
+          "freq": 389
+        }
+      ]
+    },
+    {
+      "cluster": 13,
+      "total_freq": 21480,
+      "label_hint": "antibodies",
+      "members": [
+        {
+          "term": "antibodies",
+          "freq": 3310
+        },
+        {
+          "term": "antibody",
+          "freq": 2356
+        },
+        {
+          "term": "apoptosis",
+          "freq": 883
+        },
+        {
+          "term": "infection",
+          "freq": 832
+        },
+        {
+          "term": "inflammation",
+          "freq": 828
+        },
+        {
+          "term": "macrophages",
+          "freq": 722
+        },
+        {
+          "term": "vaccines",
+          "freq": 573
+        },
+        {
+          "term": "virus",
+          "freq": 555
+        },
+        {
+          "term": "tumors",
+          "freq": 524
+        },
+        {
+          "term": "immunity",
+          "freq": 482
+        },
+        {
+          "term": "vaccine",
+          "freq": 458
+        },
+        {
+          "term": "antigens",
+          "freq": 440
+        }
+      ]
+    },
+    {
+      "cluster": 1,
+      "total_freq": 21222,
+      "label_hint": "proteins",
+      "members": [
+        {
+          "term": "proteins",
+          "freq": 3527
+        },
+        {
+          "term": "protein",
+          "freq": 2388
+        },
+        {
+          "term": "peptides",
+          "freq": 861
+        },
+        {
+          "term": "signaling",
+          "freq": 823
+        },
+        {
+          "term": "membrane",
+          "freq": 746
+        },
+        {
+          "term": "organoids",
+          "freq": 738
+        },
+        {
+          "term": "phosphorylation",
+          "freq": 730
+        },
+        {
+          "term": "membranes",
+          "freq": 645
+        },
+        {
+          "term": "metabolism",
+          "freq": 545
+        },
+        {
+          "term": "serum",
+          "freq": 497
+        },
+        {
+          "term": "enzymes",
+          "freq": 405
+        },
+        {
+          "term": "receptors",
+          "freq": 347
+        }
+      ]
+    },
+    {
+      "cluster": 23,
+      "total_freq": 18668,
+      "label_hint": "treatment",
+      "members": [
+        {
+          "term": "treatment",
+          "freq": 2137
+        },
+        {
+          "term": "patients",
+          "freq": 1541
+        },
+        {
+          "term": "inhibition",
+          "freq": 935
+        },
+        {
+          "term": "therapy",
+          "freq": 758
+        },
+        {
+          "term": "stress",
+          "freq": 581
+        },
+        {
+          "term": "disease",
+          "freq": 517
+        },
+        {
+          "term": "toxicity",
+          "freq": 453
+        },
+        {
+          "term": "death",
+          "freq": 435
+        },
+        {
+          "term": "therapies",
+          "freq": 424
+        },
+        {
+          "term": "symptoms",
+          "freq": 413
+        },
+        {
+          "term": "treatments",
+          "freq": 405
+        },
+        {
+          "term": "diseases",
+          "freq": 376
+        }
+      ]
+    },
+    {
+      "cluster": 0,
+      "total_freq": 15743,
+      "label_hint": "images",
+      "members": [
+        {
+          "term": "images",
+          "freq": 1741
+        },
+        {
+          "term": "figure",
+          "freq": 1512
+        },
+        {
+          "term": "markers",
+          "freq": 717
+        },
+        {
+          "term": "slides",
+          "freq": 665
+        },
+        {
+          "term": "imaging",
+          "freq": 593
+        },
+        {
+          "term": "exposure",
+          "freq": 534
+        },
+        {
+          "term": "figures",
+          "freq": 478
+        },
+        {
+          "term": "controls",
+          "freq": 396
+        },
+        {
+          "term": "image",
+          "freq": 320
+        },
+        {
+          "term": "surface",
+          "freq": 308
+        },
+        {
+          "term": "plots",
+          "freq": 307
+        },
+        {
+          "term": "visualization",
+          "freq": 306
+        }
+      ]
+    },
+    {
+      "cluster": 9,
+      "total_freq": 12089,
+      "label_hint": "assay",
+      "members": [
+        {
+          "term": "assay",
+          "freq": 1643
+        },
+        {
+          "term": "pmid",
+          "freq": 993
+        },
+        {
+          "term": "drugs",
+          "freq": 839
+        },
+        {
+          "term": "inhibitors",
+          "freq": 554
+        },
+        {
+          "term": "inhibitor",
+          "freq": 514
+        },
+        {
+          "term": "drug",
+          "freq": 349
+        },
+        {
+          "term": "injection",
+          "freq": 303
+        },
+        {
+          "term": "chromatography",
+          "freq": 301
+        },
+        {
+          "term": "metabolites",
+          "freq": 284
+        },
+        {
+          "term": "doses",
+          "freq": 253
+        },
+        {
+          "term": "supplementation",
+          "freq": 215
+        },
+        {
+          "term": "supplement",
+          "freq": 210
+        }
+      ]
+    },
+    {
+      "cluster": 20,
+      "total_freq": 11719,
+      "label_hint": "primers",
+      "members": [
+        {
+          "term": "primers",
+          "freq": 637
+        },
+        {
+          "term": "secretion",
+          "freq": 403
+        },
+        {
+          "term": "translation",
+          "freq": 378
+        },
+        {
+          "term": "nacl",
+          "freq": 324
+        },
+        {
+          "term": "qiagen",
+          "freq": 305
+        },
+        {
+          "term": "degs",
+          "freq": 289
+        },
+        {
+          "term": "titers",
+          "freq": 281
+        },
+        {
+          "term": "titer",
+          "freq": 251
+        },
+        {
+          "term": "primer",
+          "freq": 247
+        },
+        {
+          "term": "lysate",
+          "freq": 234
+        },
+        {
+          "term": "aliquots",
+          "freq": 222
+        },
+        {
+          "term": "tregs",
+          "freq": 208
+        }
+      ]
+    },
+    {
+      "cluster": 6,
+      "total_freq": 11167,
+      "label_hint": "china",
+      "members": [
+        {
+          "term": "china",
+          "freq": 958
+        },
+        {
+          "term": "cultures",
+          "freq": 741
+        },
+        {
+          "term": "germany",
+          "freq": 716
+        },
+        {
+          "term": "area",
+          "freq": 676
+        },
+        {
+          "term": "regions",
+          "freq": 619
+        },
+        {
+          "term": "region",
+          "freq": 579
+        },
+        {
+          "term": "localization",
+          "freq": 552
+        },
+        {
+          "term": "state",
+          "freq": 419
+        },
+        {
+          "term": "colonies",
+          "freq": 374
+        },
+        {
+          "term": "states",
+          "freq": 355
+        },
+        {
+          "term": "place",
+          "freq": 345
+        },
+        {
+          "term": "japan",
+          "freq": 298
+        }
+      ]
+    },
+    {
+      "cluster": 8,
+      "total_freq": 10894,
+      "label_hint": "mabs",
+      "members": [
+        {
+          "term": "mabs",
+          "freq": 946
+        },
+        {
+          "term": "rrid",
+          "freq": 879
+        },
+        {
+          "term": "cdna",
+          "freq": 309
+        },
+        {
+          "term": "dmso",
+          "freq": 233
+        },
+        {
+          "term": "qpcr",
+          "freq": 191
+        },
+        {
+          "term": "tams",
+          "freq": 186
+        },
+        {
+          "term": "standard",
+          "freq": 170
+        },
+        {
+          "term": "pbmcs",
+          "freq": 166
+        },
+        {
+          "term": "hscs",
+          "freq": 154
+        },
+        {
+          "term": "lnps",
+          "freq": 146
+        },
+        {
+          "term": "sgrnas",
+          "freq": 136
+        },
+        {
+          "term": "icis",
+          "freq": 135
+        }
+      ]
+    },
+    {
+      "cluster": 24,
+      "total_freq": 10442,
+      "label_hint": "supernatant",
+      "members": [
+        {
+          "term": "supernatant",
+          "freq": 1219
+        },
+        {
+          "term": "invitrogen",
+          "freq": 589
+        },
+        {
+          "term": "plasmids",
+          "freq": 393
+        },
+        {
+          "term": "supernatants",
+          "freq": 391
+        },
+        {
+          "term": "biolegend",
+          "freq": 280
+        },
+        {
+          "term": "thermofisher",
+          "freq": 191
+        },
+        {
+          "term": "millipore",
+          "freq": 162
+        },
+        {
+          "term": "cytiva",
+          "freq": 154
+        },
+        {
+          "term": "illumina",
+          "freq": 117
+        },
+        {
+          "term": "cilia",
+          "freq": 114
+        },
+        {
+          "term": "adjuvants",
+          "freq": 113
+        },
+        {
+          "term": "coverslip",
+          "freq": 98
+        }
+      ]
+    },
+    {
+      "cluster": 7,
+      "total_freq": 10124,
+      "label_hint": "sigma",
+      "members": [
+        {
+          "term": "sigma",
+          "freq": 531
+        },
+        {
+          "term": "elisa",
+          "freq": 463
+        },
+        {
+          "term": "fisher",
+          "freq": 398
+        },
+        {
+          "term": "pipette",
+          "freq": 341
+        },
+        {
+          "term": "wells",
+          "freq": 330
+        },
+        {
+          "term": "edta",
+          "freq": 282
+        },
+        {
+          "term": "candidates",
+          "freq": 244
+        },
+        {
+          "term": "sirna",
+          "freq": 215
+        },
+        {
+          "term": "dapi",
+          "freq": 190
+        },
+        {
+          "term": "louis",
+          "freq": 160
+        },
+        {
+          "term": "wang",
+          "freq": 155
+        },
+        {
+          "term": "diego",
+          "freq": 153
+        }
+      ]
+    },
+    {
+      "cluster": 3,
+      "total_freq": 6199,
+      "label_hint": "pmcid",
+      "members": [
+        {
+          "term": "pmcid",
+          "freq": 979
+        },
+        {
+          "term": "gibco",
+          "freq": 348
+        },
+        {
+          "term": "plasmid",
+          "freq": 339
+        },
+        {
+          "term": "abcam",
+          "freq": 323
+        },
+        {
+          "term": "blots",
+          "freq": 227
+        },
+        {
+          "term": "blot",
+          "freq": 180
+        },
+        {
+          "term": "foci",
+          "freq": 120
+        },
+        {
+          "term": "egfr",
+          "freq": 109
+        },
+        {
+          "term": "gsea",
+          "freq": 106
+        },
+        {
+          "term": "cohort",
+          "freq": 97
+        },
+        {
+          "term": "vegf",
+          "freq": 81
+        },
+        {
+          "term": "egfp",
+          "freq": 76
+        }
+      ]
+    },
+    {
+      "cluster": 18,
+      "total_freq": 3012,
+      "label_hint": "nanoparticles",
+      "members": [
+        {
+          "term": "nanoparticles",
+          "freq": 884
+        },
+        {
+          "term": "microenvironment",
+          "freq": 227
+        },
+        {
+          "term": "nanocarriers",
+          "freq": 123
+        },
+        {
+          "term": "nanobodies",
+          "freq": 116
+        },
+        {
+          "term": "nanotechnology",
+          "freq": 107
+        },
+        {
+          "term": "nanovesicles",
+          "freq": 104
+        },
+        {
+          "term": "microtubules",
+          "freq": 97
+        },
+        {
+          "term": "nanomedicine",
+          "freq": 95
+        },
+        {
+          "term": "nanomaterials",
+          "freq": 86
+        },
+        {
+          "term": "nanoparticle",
+          "freq": 78
+        },
+        {
+          "term": "nanobody",
+          "freq": 68
+        },
+        {
+          "term": "microsystems",
+          "freq": 46
+        }
+      ]
+    }
+  ]
+}

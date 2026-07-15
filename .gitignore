@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Corpus data files (keep the folder, not the contents)
+corpus/*
+!corpus/.gitkeep
+
+# macOS
+.DS_Store
+
+# Environment
+.env
