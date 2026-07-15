@@ -51,18 +51,16 @@ GLINER_THRESHOLD = 0.5
 # After running script 01 (characterization), use its top TF-IDF terms and
 # noun-chunk heads to decide what labels make sense for your corpus.
 ENTITY_LABELS: list[str] = [
-    # "person",
-    # "organization",
-    # "location",
-    # "product",
-    # "technology",
-    # "event",
-    # "concept",
-    # "law or regulation",
-    # "date or time period",
-    # "financial value",
-    # "quantity or measurement",
-    # "role or title",
+    "disease or condition",
+    "pathogen or virus",
+    "drug or therapeutic antibody",
+    "protein or gene",
+    "cell type or cell line",
+    "organism or animal model",
+    "tissue or organ",
+    "biological process",
+    "laboratory method or assay",
+    "treatment or therapy",
 ]
 
 COUNTS = OUTPUT / "02_counts.json"

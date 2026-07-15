@@ -59,18 +59,16 @@ GLINER_THRESHOLD = 0.4
 # Mirror the entity labels from script 02 for domain/range typing.
 # Leave empty to skip GLiNER typing — REBEL triple extraction still runs in full.
 ENTITY_LABELS: list[str] = [
-    # "person",
-    # "organization",
-    # "location",
-    # "product",
-    # "technology",
-    # "event",
-    # "concept",
-    # "law or regulation",
-    # "date or time period",
-    # "financial value",
-    # "quantity or measurement",
-    # "role or title",
+    "disease or condition",
+    "pathogen or virus",
+    "drug or therapeutic antibody",
+    "protein or gene",
+    "cell type or cell line",
+    "organism or animal model",
+    "tissue or organ",
+    "biological process",
+    "laboratory method or assay",
+    "treatment or therapy",
 ]
 
 COUNTS = OUTPUT / "03_counts.json"

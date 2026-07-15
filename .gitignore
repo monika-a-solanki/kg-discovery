@@ -11,6 +11,10 @@ build/
 corpus/*
 !corpus/.gitkeep
 
+# Pipeline outputs (keep the folder, not the contents)
+output/*
+!output/.gitkeep
+
 # macOS
 .DS_Store
 
