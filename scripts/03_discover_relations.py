@@ -57,20 +57,20 @@ GLINER_MODEL = "urchade/gliner_medium-v2.1"
 GLINER_THRESHOLD = 0.4
 
 # Mirror the entity labels from script 02 for domain/range typing.
-# Keep in sync when you add or rename labels there.
-ENTITY_LABELS = [
-    "person",
-    "organization",
-    "location",
-    "product",
-    "technology",
-    "event",
-    "concept",
-    "law or regulation",
-    "date or time period",
-    "financial value",
-    "quantity or measurement",
-    "role or title",
+# Leave empty to skip GLiNER typing — REBEL triple extraction still runs in full.
+ENTITY_LABELS: list[str] = [
+    # "person",
+    # "organization",
+    # "location",
+    # "product",
+    # "technology",
+    # "event",
+    # "concept",
+    # "law or regulation",
+    # "date or time period",
+    # "financial value",
+    # "quantity or measurement",
+    # "role or title",
 ]
 
 COUNTS = OUTPUT / "03_counts.json"
@@ -278,18 +278,26 @@ def cluster_and_report(rel_freq, rel_examples, raw_triples):
         if lab != -1:
             groups[lab].append(rel)
 
-    log("typing head/tail entities in top triples with GLiNER…")
-    gliner = GLiNER.from_pretrained(GLINER_MODEL)
-    typed_triples = []
-    for (h, r, tl), count in raw_triples.most_common(200):
-        typed_triples.append({
-            "head": h,
-            "head_type": type_entity(gliner, h),
-            "relation": r,
-            "tail": tl,
-            "tail_type": type_entity(gliner, tl),
-            "count": count,
-        })
+    if ENTITY_LABELS:
+        log("typing head/tail entities in top triples with GLiNER…")
+        gliner = GLiNER.from_pretrained(GLINER_MODEL)
+        typed_triples = [
+            {
+                "head": h,
+                "head_type": type_entity(gliner, h),
+                "relation": r,
+                "tail": tl,
+                "tail_type": type_entity(gliner, tl),
+                "count": count,
+            }
+            for (h, r, tl), count in raw_triples.most_common(200)
+        ]
+    else:
+        log("ENTITY_LABELS is empty — skipping domain/range typing; set labels in the script to enable.")
+        typed_triples = [
+            {"head": h, "head_type": "?", "relation": r, "tail": tl, "tail_type": "?", "count": count}
+            for (h, r, tl), count in raw_triples.most_common(200)
+        ]
 
     clusters_out = []
     for lab, members in groups.items():

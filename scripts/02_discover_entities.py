@@ -46,21 +46,23 @@ GLINER_MODEL = "urchade/gliner_medium-v2.1"
 GLINER_THRESHOLD = 0.5
 
 # Seed labels for GLiNER zero-shot NER.
-# These drive extraction across any domain without fine-tuning.
-# Add, remove, or rename to match your corpus.
-ENTITY_LABELS = [
-    "person",
-    "organization",
-    "location",
-    "product",
-    "technology",
-    "event",
-    "concept",
-    "law or regulation",
-    "date or time period",
-    "financial value",
-    "quantity or measurement",
-    "role or title",
+# If you leave this empty, the NER track is skipped and only the unsupervised
+# noun-chunk clustering (Track B) runs — no domain knowledge required.
+# After running script 01 (characterization), use its top TF-IDF terms and
+# noun-chunk heads to decide what labels make sense for your corpus.
+ENTITY_LABELS: list[str] = [
+    # "person",
+    # "organization",
+    # "location",
+    # "product",
+    # "technology",
+    # "event",
+    # "concept",
+    # "law or regulation",
+    # "date or time period",
+    # "financial value",
+    # "quantity or measurement",
+    # "role or title",
 ]
 
 COUNTS = OUTPUT / "02_counts.json"
@@ -80,8 +82,13 @@ def log(msg: str) -> None:
 
 
 def accumulate(limit):
-    log("loading GLiNER…")
-    gliner = GLiNER.from_pretrained(GLINER_MODEL)
+    if ENTITY_LABELS:
+        log("loading GLiNER…")
+        gliner: GLiNER | None = GLiNER.from_pretrained(GLINER_MODEL)
+    else:
+        log("ENTITY_LABELS is empty — NER track skipped; running noun-chunk discovery only.")
+        gliner = None
+
     log("loading spaCy for noun chunks…")
     nlp = spacy.load("en_core_web_md", disable=["ner"])
     nlp.max_length = 2_000_000
@@ -103,14 +110,15 @@ def accumulate(limit):
         i += 1
         t = text[:MAX_DOC_CHARS]
 
-        # A) GLiNER zero-shot NER
-        for ent in gliner.predict_entities(t, ENTITY_LABELS, threshold=GLINER_THRESHOLD):
-            txt = clean(ent["text"]).lower()
-            if 2 < len(txt) < 80:
-                ner_types[ent["label"]] += 1
-                ner_examples[ent["label"]][txt] += 1
+        # A) GLiNER zero-shot NER (only when labels are configured)
+        if gliner:
+            for ent in gliner.predict_entities(t, ENTITY_LABELS, threshold=GLINER_THRESHOLD):
+                txt = clean(ent["text"]).lower()
+                if 2 < len(txt) < 80:
+                    ner_types[ent["label"]] += 1
+                    ner_examples[ent["label"]][txt] += 1
 
-        # B) Noun-chunk heads for emergent types beyond the label set
+        # B) Noun-chunk heads for emergent types — always runs, no labels needed
         doc = nlp(t)
         for ch in doc.noun_chunks:
             head = clean(ch.root.text).lower()
@@ -176,13 +184,16 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
     (OUTPUT / "02_entities.json").write_text(json.dumps(result, indent=2))
 
     n_clusters = len(clusters)
-    lines = [
-        "ENTITY-TYPE DISCOVERY", "=" * 60, "",
-        f"A) GLiNER zero-shot NER  ({len(ENTITY_LABELS)} labels, threshold={GLINER_THRESHOLD}):",
-    ]
-    for r in result["ner_types"]:
-        lines.append(f"  {r['count']:>6}  {r['label']:<25}  e.g. {', '.join(r['examples'][:5])}")
-    lines += ["", f"B) Emergent types — noun-chunk HDBSCAN  ({n_clusters} clusters discovered):"]
+    lines = ["ENTITY-TYPE DISCOVERY", "=" * 60, ""]
+    if result["ner_types"]:
+        lines.append(f"A) GLiNER zero-shot NER  ({len(ENTITY_LABELS)} labels, threshold={GLINER_THRESHOLD}):")
+        for r in result["ner_types"]:
+            lines.append(f"  {r['count']:>6}  {r['label']:<25}  e.g. {', '.join(r['examples'][:5])}")
+        lines.append("")
+    else:
+        lines.append("A) GLiNER NER — skipped (ENTITY_LABELS is empty; set labels in the script to enable)")
+        lines.append("")
+    lines.append(f"B) Emergent types — noun-chunk HDBSCAN  ({n_clusters} clusters discovered):")
     for c in cluster_summaries:
         terms = ", ".join(m["term"] for m in c["members"][:8])
         lines.append(f"  [{c['total_freq']:>5}]  ~{c['label_hint']}: {terms}")
