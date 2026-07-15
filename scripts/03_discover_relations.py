@@ -1,19 +1,23 @@
-"""Step 3 - Relation-type DISCOVERY (OpenIE -> cluster -> name).
+"""Step 3 - Relation-type DISCOVERY (fastcoref → REBEL → HDBSCAN → GLiNER typing).
 
-No fixed predicate list. For each sentence:
-  1. Tag entity spans using the general NER model — keeps discovery independent
-     of any prior schema or domain-specific label vocabulary.
-  2. For co-occurring entity pairs, extract the connecting predicate from the
-     dependency parse (verb lemma on the path between the two entity heads,
-     plus any governing preposition). Real OpenIE, not a verb list.
-  3. Record (subjType, predicateLemma, objType) triples.
+Pipeline per document:
+  1. fastcoref (transformer-based): resolves pronoun/reference mentions at
+     document level. Pronouns in each sentence are replaced with the named
+     entity they refer to, so REBEL sees clean entity text across sentences.
+  2. REBEL (seq2seq, Babelscape/rebel-large): extracts (head, relation, tail)
+     triples sentence by sentence. No fixed predicate vocabulary — relations
+     emerge directly from the text.
+  3. Relation strings are embedded and clustered with HDBSCAN: near-synonyms
+     ("founded by", "was founded by", "co-founded by") merge automatically.
+     Cluster count is discovered, not specified.
+  4. GLiNER types the head/tail entity texts in the top triples to give each
+     relation cluster a domain → range signature.
 
-Then cluster predicate lemmas by embedding so near-synonyms collapse into a
-candidate relation type, with dominant domain/range + examples.
+Hardened for large-corpus scale: streams docs, caps per-doc length and
+sentence count, prints flushed progress, checkpoints every CKPT_EVERY docs.
+Use --cluster-only to re-run clustering/typing from the checkpoint.
 
-Hardened for large-corpus scale: streams docs, caps per-doc length, prints
-flushed progress, checkpoints raw triple counts every CKPT_EVERY docs so the
-expensive parse survives a crash (--cluster-only re-runs clustering only).
+GPU note: REBEL on CPU is ~1 s/sentence. Set REBEL_DEVICE=0 to use a GPU.
 
 Outputs:
   output/03_counts.json     - raw aggregates (checkpoint, resumable)
@@ -22,77 +26,190 @@ Outputs:
 """
 
 import json
+import os
 import re
 import sys
 from collections import Counter, defaultdict
 
 import spacy
+from fastcoref import FCoref
+from gliner import GLiNER
 from sentence_transformers import SentenceTransformer
-from sklearn.cluster import KMeans
+from sklearn.cluster import HDBSCAN
+from transformers import pipeline as hf_pipeline
 
 from common import iter_docs, OUTPUT
 
+# ── Configuration ─────────────────────────────────────────────────────────────
+
 LIMIT = None
 MAX_DOC_CHARS = 120_000
+MAX_SENTS_PER_DOC = 60      # cap sentences fed to REBEL per doc (speed)
+MIN_SENT_CHARS = 20         # skip very short / boilerplate sentences
 PROGRESS_EVERY = 25
 CKPT_EVERY = 100
-N_PRED_CLUSTERS = 18
-MIN_PRED_FREQ = 5
+MIN_REL_FREQ = 3            # min occurrences for a relation string to cluster
+MIN_CLUSTER_SIZE = 3        # HDBSCAN: fewest items that form a cluster
+REBEL_BATCH_SIZE = 8        # sentences per REBEL forward pass
+REBEL_DEVICE = int(os.getenv("REBEL_DEVICE", "-1"))  # -1 = CPU; 0 = first GPU
 EMBED_MODEL = "all-MiniLM-L6-v2"
+GLINER_MODEL = "urchade/gliner_medium-v2.1"
+GLINER_THRESHOLD = 0.4
 
-# Entity types to EXCLUDE from relation extraction.
-# CARDINAL and ORDINAL are almost never real entities ("first", "two", etc.).
-# Everything else the model finds is included so the pipeline works for any
-# domain — financial (MONEY), historical (DATE), scientific (QUANTITY), etc.
-# Narrow this set if your corpus produces too much numeric noise.
-ENT_LABELS_EXCLUDE = {"CARDINAL", "ORDINAL"}
+# Mirror the entity labels from script 02 for domain/range typing.
+# Keep in sync when you add or rename labels there.
+ENTITY_LABELS = [
+    "person",
+    "organization",
+    "location",
+    "product",
+    "technology",
+    "event",
+    "concept",
+    "law or regulation",
+    "date or time period",
+    "financial value",
+    "quantity or measurement",
+    "role or title",
+]
 
 COUNTS = OUTPUT / "03_counts.json"
 
+# ── Coreference helpers ───────────────────────────────────────────────────────
 
-def log(msg):
+
+def build_coref_map(text: str, doc, coref_model: FCoref) -> dict[int, str | None]:
+    """Map spaCy token indices of pronoun mentions to their resolved entity text.
+
+    fastcoref returns character-level (start, end) spans; we reconcile them
+    with the spaCy token index space so resolve_sentence can iterate tokens.
+
+    Returns {token_idx: replacement_text} where None means "skip this token"
+    (it is a non-head token of a multi-token pronoun span).
+    """
+    preds = coref_model.predict(texts=[text])
+    clusters_spans = preds[0].get_clusters()           # list[list[(start_char, end_char)]]
+    clusters_texts = preds[0].get_clusters(as_strings=True)  # same shape, as strings
+
+    coref_map: dict[int, str | None] = {}
+    for span_group, text_group in zip(clusters_spans, clusters_texts):
+        # Pick the most informative mention — prefer a span with a proper noun.
+        best_text: str | None = None
+        for (cs, ce), mention_text in zip(span_group, text_group):
+            spacy_span = doc.char_span(cs, ce, alignment_mode="expand")
+            if spacy_span and any(t.pos_ == "PROPN" for t in spacy_span):
+                best_text = mention_text
+                break
+        if best_text is None and text_group:
+            best_text = text_group[0]
+
+        # Replace pronoun-only mentions with the best representative text.
+        for (cs, ce), mention_text in zip(span_group, text_group):
+            if mention_text == best_text:
+                continue
+            spacy_span = doc.char_span(cs, ce, alignment_mode="expand")
+            if spacy_span and all(t.pos_ == "PRON" for t in spacy_span):
+                coref_map[spacy_span[0].i] = best_text
+                for tok in spacy_span[1:]:
+                    coref_map[tok.i] = None  # secondary tokens → drop
+    return coref_map
+
+
+def resolve_sentence(sent, coref_map: dict[int, str | None]) -> str:
+    """Return sentence text with pronoun spans replaced by their referents."""
+    parts: list[str] = []
+    for tok in sent:
+        if tok.i not in coref_map:
+            parts.append(tok.text_with_ws)
+        elif coref_map[tok.i] is not None:
+            parts.append(coref_map[tok.i] + " ")
+        # else: secondary token of a pronoun span — omit
+    return "".join(parts).strip()
+
+
+# ── REBEL helpers ─────────────────────────────────────────────────────────────
+
+
+def extract_rebel_triplets(generated_text: str) -> list[dict]:
+    """Parse REBEL's linearized output: <triplet> SUBJ <subj> OBJ <obj> REL …"""
+    triplets: list[dict] = []
+    subject = object_ = relation = ""
+    current: str | None = None
+    for token in (
+        generated_text.replace("<s>", "").replace("<pad>", "").replace("</s>", "").split()
+    ):
+        if token == "<triplet>":
+            if subject and relation and object_:
+                triplets.append({
+                    "head": subject.strip(),
+                    "relation": relation.strip(),
+                    "tail": object_.strip(),
+                })
+            subject = object_ = relation = ""
+            current = "subject"
+        elif token == "<subj>":
+            if relation:  # second <subj> within same triplet group
+                triplets.append({
+                    "head": subject.strip(),
+                    "relation": relation.strip(),
+                    "tail": object_.strip(),
+                })
+            object_ = ""
+            current = "object"
+        elif token == "<obj>":
+            relation = ""
+            current = "relation"
+        elif current == "subject":
+            subject += " " + token
+        elif current == "object":
+            object_ += " " + token
+        elif current == "relation":
+            relation += " " + token
+    if subject and relation and object_:
+        triplets.append({
+            "head": subject.strip(),
+            "relation": relation.strip(),
+            "tail": object_.strip(),
+        })
+    return triplets
+
+
+def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-def dep_predicate(a_head, b_head):
-    a_anc = list(a_head.ancestors)
-    b_anc = {t.i for t in b_head.ancestors}
-    lca = next((t for t in a_anc if t.i in b_anc), None)
-    cand = lca if lca is not None else a_head.head
-    verb = None
-    if cand.pos_ in ("VERB", "AUX"):
-        verb = cand.lemma_.lower()
-    else:
-        for t in [cand] + list(cand.ancestors):
-            if t.pos_ in ("VERB", "AUX"):
-                verb = t.lemma_.lower()
-                break
-    prep = None
-    for t in (a_head, b_head):
-        if t.dep_ == "pobj" and t.head.pos_ == "ADP":
-            prep = t.head.lemma_.lower()
-    if verb and prep:
-        return f"{verb}_{prep}"
-    return verb
+# ── Accumulation pass ─────────────────────────────────────────────────────────
 
 
 def accumulate(limit):
+    log("loading spaCy…")
     nlp = spacy.load("en_core_web_md")
     nlp.max_length = 2_000_000
 
-    triples = Counter()
-    pred_freq = Counter()
-    pred_pair = defaultdict(Counter)
-    examples = defaultdict(list)
+    log("loading fastcoref…")
+    coref_model = FCoref(device="cpu")
 
-    def checkpoint(i):
+    log("loading REBEL…")
+    rebel = hf_pipeline(
+        "text2text-generation",
+        model="Babelscape/rebel-large",
+        device=REBEL_DEVICE,
+    )
+
+    rel_freq: Counter = Counter()
+    rel_examples: dict[str, list] = defaultdict(list)
+    raw_triples: Counter = Counter()  # (head, relation, tail) → count
+
+    def checkpoint(n: int) -> None:
         COUNTS.write_text(json.dumps({
-            "docs_processed": i,
-            "triples": {f"{s}|{p}|{o}": c for (s, p, o), c in triples.items()},
-            "pred_freq": dict(pred_freq),
-            "pred_pair": {p: {f"{a}|{b}": c for (a, b), c in pp.items()}
-                          for p, pp in pred_pair.items()},
-            "examples": {p: ex for p, ex in examples.items()},
+            "docs_processed": n,
+            "rel_freq": dict(rel_freq),
+            "rel_examples": {r: ex for r, ex in rel_examples.items()},
+            # Tab-separated key so head/tail text can contain | safely.
+            "raw_triples": {
+                f"{h}\t{r}\t{t}": c
+                for (h, r, t), c in raw_triples.most_common(1000)
+            },
         }))
 
     i = 0
@@ -100,117 +217,148 @@ def accumulate(limit):
         i += 1
         t = text[:MAX_DOC_CHARS]
         doc = nlp(t)
-        spans = [
-            (e.start_char, e.end_char, e.label_)
-            for e in doc.ents
-            if e.label_ not in ENT_LABELS_EXCLUDE and 2 < len(e.text) < 80
-        ]
-        if len(spans) >= 2:
-            for sent in doc.sents:
-                ss = [(s, e, l) for s, e, l in spans
-                      if s >= sent.start_char and e <= sent.end_char]
-                if len(ss) < 2:
-                    continue
-                heads = []
-                for s, e, l in ss:
-                    span = doc.char_span(s, e, alignment_mode="expand")
-                    if span is not None:
-                        heads.append((span.root, l))
-                for a in range(len(heads)):
-                    for b in range(len(heads)):
-                        if a == b:
-                            continue
-                        (ha, la), (hb, lb) = heads[a], heads[b]
-                        if la == lb or abs(ha.i - hb.i) > 25:
-                            continue
-                        pred = dep_predicate(ha, hb)
-                        if not pred or len(pred) < 2:
-                            continue
-                        triples[(la, pred, lb)] += 1
-                        pred_freq[pred] += 1
-                        pred_pair[pred][(la, lb)] += 1
-                        if len(examples[pred]) < 3:
-                            examples[pred].append(re.sub(r"\s+", " ", sent.text).strip()[:200])
+        coref_map = build_coref_map(t, doc, coref_model)
+
+        sentences = [
+            resolve_sentence(sent, coref_map)
+            for sent in doc.sents
+            if len(sent.text.strip()) >= MIN_SENT_CHARS
+        ][:MAX_SENTS_PER_DOC]
         del doc
 
+        if sentences:
+            outputs = rebel(sentences, max_length=512, num_beams=3, batch_size=REBEL_BATCH_SIZE)
+            for sent_text, out in zip(sentences, outputs):
+                for tri in extract_rebel_triplets(out["generated_text"]):
+                    h, r, tl = tri["head"], tri["relation"], tri["tail"]
+                    if h and r and tl and len(r) >= 2:
+                        raw_triples[(h, r, tl)] += 1
+                        rel_freq[r] += 1
+                        if len(rel_examples[r]) < 5:
+                            rel_examples[r].append({
+                                "sentence": sent_text[:200],
+                                "head": h,
+                                "tail": tl,
+                            })
+
         if i % PROGRESS_EVERY == 0:
-            log(f"  ...{i} docs | preds={len(pred_freq)} triples={len(triples)}")
+            log(f"  …{i} docs | relations={len(rel_freq)} triples={len(raw_triples)}")
         if i % CKPT_EVERY == 0:
             checkpoint(i)
+
     checkpoint(i)
     log(f"accumulation done: {i} docs")
-    return triples, pred_freq, pred_pair, examples
+    return rel_freq, rel_examples, raw_triples
 
 
-def cluster_and_report(triples, pred_freq, pred_pair, examples):
-    preds = [p for p, c in pred_freq.items() if c >= MIN_PRED_FREQ]
-    log(f"clustering {len(preds)} predicate lemmas...")
+# ── Clustering + report ───────────────────────────────────────────────────────
+
+
+def type_entity(gliner: GLiNER, text: str) -> str:
+    """Return the best GLiNER label for an entity string, or 'unknown'."""
+    hits = gliner.predict_entities(text, ENTITY_LABELS, threshold=GLINER_THRESHOLD)
+    return hits[0]["label"] if hits else "unknown"
+
+
+def cluster_and_report(rel_freq, rel_examples, raw_triples):
+    preds = [r for r, c in rel_freq.items() if c >= MIN_REL_FREQ]
+    log(f"embedding {len(preds)} relation strings…")
+    encoder = SentenceTransformer(EMBED_MODEL)
+    emb = encoder.encode(preds, show_progress_bar=False, normalize_embeddings=True, batch_size=256)
+
+    log("clustering with HDBSCAN…")
+    raw_labels = HDBSCAN(
+        min_cluster_size=MIN_CLUSTER_SIZE,
+        metric="euclidean",
+        cluster_selection_method="eom",
+    ).fit_predict(emb)
+
+    groups: dict[int, list[str]] = defaultdict(list)
+    for rel, lab in zip(preds, raw_labels):
+        if lab != -1:
+            groups[lab].append(rel)
+
+    log("typing head/tail entities in top triples with GLiNER…")
+    gliner = GLiNER.from_pretrained(GLINER_MODEL)
+    typed_triples = []
+    for (h, r, tl), count in raw_triples.most_common(200):
+        typed_triples.append({
+            "head": h,
+            "head_type": type_entity(gliner, h),
+            "relation": r,
+            "tail": tl,
+            "tail_type": type_entity(gliner, tl),
+            "count": count,
+        })
+
     clusters_out = []
-    if preds:
-        enc = SentenceTransformer(EMBED_MODEL)
-        emb = enc.encode(preds, show_progress_bar=False, normalize_embeddings=True, batch_size=256)
-        k = min(N_PRED_CLUSTERS, len(preds))
-        labels = KMeans(n_clusters=k, random_state=0, n_init=10).fit_predict(emb)
-        groups = defaultdict(list)
-        for p, lab in zip(preds, labels):
-            groups[int(lab)].append(p)
-        for lab, members in groups.items():
-            members.sort(key=lambda p: -pred_freq[p])
-            dr = Counter()
-            for p in members:
-                dr.update(pred_pair[p])
-            clusters_out.append({
-                "label_hint": members[0],
-                "total_freq": sum(pred_freq[p] for p in members),
-                "predicates": members[:10],
-                "top_domain_range": [{"domain": a, "range": b, "count": c}
-                                     for (a, b), c in dr.most_common(4)],
-                "examples": examples.get(members[0], [])[:2],
-            })
-        clusters_out.sort(key=lambda x: -x["total_freq"])
+    for lab, members in groups.items():
+        members.sort(key=lambda r: -rel_freq[r])
+        dr: Counter = Counter()
+        for tri in typed_triples:
+            if tri["relation"] in members:
+                dr[(tri["head_type"], tri["tail_type"])] += tri["count"]
+        clusters_out.append({
+            "label_hint": members[0],
+            "total_freq": sum(rel_freq[r] for r in members),
+            "relations": members[:10],
+            "top_domain_range": [
+                {"domain": a, "range": b, "count": c}
+                for (a, b), c in dr.most_common(4)
+            ],
+            "examples": rel_examples.get(members[0], [])[:2],
+        })
+    clusters_out.sort(key=lambda x: -x["total_freq"])
 
     result = {
-        "top_raw_triples": [
-            {"domain": s, "predicate": p, "range": o, "count": c}
-            for (s, p, o), c in triples.most_common(40)
-        ],
+        "top_typed_triples": typed_triples[:40],
         "relation_clusters": clusters_out,
     }
     (OUTPUT / "03_relations.json").write_text(json.dumps(result, indent=2))
 
-    lines = ["RELATION-TYPE DISCOVERY", "=" * 60, "",
-             "Candidate relation types (clustered predicate lemmas):"]
+    lines = [
+        "RELATION-TYPE DISCOVERY", "=" * 60, "",
+        "Candidate relation types (REBEL + HDBSCAN):",
+    ]
     for c in clusters_out:
-        dr = "; ".join(f"{d['domain']}->{d['range']}({d['count']})" for d in c["top_domain_range"])
+        dr = "; ".join(
+            f"{d['domain']}→{d['range']}({d['count']})"
+            for d in c["top_domain_range"]
+        )
         lines.append(f"\n  ~{c['label_hint'].upper()}  [freq {c['total_freq']}]")
-        lines.append(f"     predicates: {', '.join(c['predicates'])}")
-        lines.append(f"     domain->range: {dr}")
+        lines.append(f"     relations: {', '.join(c['relations'])}")
+        if dr:
+            lines.append(f"     domain→range: {dr}")
         for ex in c["examples"]:
-            lines.append(f"     e.g. {ex}")
-    lines += ["", "Top raw (type, predicate, type) triples:"]
-    for r in result["top_raw_triples"][:25]:
-        lines.append(f"  {r['count']:>4}  ({r['domain']}) -[{r['predicate']}]-> ({r['range']})")
+            lines.append(f"     e.g. {ex['sentence']}")
+    lines += ["", "Top typed (head_type) -[relation]→ (tail_type) triples:"]
+    for tri in typed_triples[:25]:
+        lines.append(
+            f"  {tri['count']:>4}  ({tri['head_type']}) -[{tri['relation']}]→ ({tri['tail_type']})"
+            f"   [{tri['head']} → {tri['tail']}]"
+        )
+
     (OUTPUT / "03_relations.txt").write_text("\n".join(lines))
     log("\n".join(lines))
-    log(f"\n-> {OUTPUT/'03_relations.json'}")
+    log(f"\n→ {OUTPUT / '03_relations.json'}")
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
 
 
 def main():
     if "--cluster-only" in sys.argv:
         d = json.loads(COUNTS.read_text())
         log(f"loaded checkpoint: {d['docs_processed']} docs")
-        triples = Counter({tuple(k.split("|")): v for k, v in d["triples"].items()})
-        pred_pair = defaultdict(Counter)
-        for p, pp in d["pred_pair"].items():
-            for ab, c in pp.items():
-                a, b = ab.split("|")
-                pred_pair[p][(a, b)] = c
-        cluster_and_report(triples, Counter(d["pred_freq"]), pred_pair, d["examples"])
+        raw_triples: Counter = Counter({
+            tuple(k.split("\t")): v for k, v in d["raw_triples"].items()
+        })
+        cluster_and_report(Counter(d["rel_freq"]), d["rel_examples"], raw_triples)
         return
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     limit = int(args[0]) if args else LIMIT
-    triples, pred_freq, pred_pair, examples = accumulate(limit)
-    cluster_and_report(triples, pred_freq, pred_pair, examples)
+    rel_freq, rel_examples, raw_triples = accumulate(limit)
+    cluster_and_report(rel_freq, rel_examples, raw_triples)
 
 
 if __name__ == "__main__":

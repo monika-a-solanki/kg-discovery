@@ -9,11 +9,21 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# 1) Install deps first (cached layer) — only deps, no project code yet.
+# 1) Install Python deps (cached layer) — only deps, no project code yet.
 COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev
 
-# 2) Add the pipeline + corpus.
+# 2) Pre-download transformer model weights so they are baked into the image
+#    and containers start offline. REBEL (~1.5 GB) and fastcoref (~400 MB).
+RUN /app/.venv/bin/python - <<'EOF'
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+AutoTokenizer.from_pretrained("Babelscape/rebel-large")
+AutoModelForSeq2SeqLM.from_pretrained("Babelscape/rebel-large")
+from fastcoref import FCoref
+FCoref(device="cpu")          # downloads biu-nlp/f-coref on first run
+EOF
+
+# 3) Add the pipeline + corpus.
 COPY scripts/ ./scripts/
 COPY corpus/ ./corpus/
 RUN mkdir -p output
