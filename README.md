@@ -10,10 +10,11 @@ The output is a corpus-grounded schema ready for downstream extraction.
 
 ## How it works
 
-Three scripts run in sequence:
+Four scripts, run in order:
 
 | Script | What it does | Models used |
 |--------|-------------|-------------|
+| `00_ingest_s3.py` | Download JSON/JSONL documents from S3 → `corpus/*.txt` | boto3 |
 | `01_characterize.py` | Corpus statistics, TF-IDF vocabulary, noun-chunk frequencies | spaCy `en_core_web_md` |
 | `02_discover_entities.py` | Zero-shot NER (configurable labels) + unsupervised noun-chunk clustering | GLiNER + `all-MiniLM-L6-v2` + HDBSCAN |
 | `03_discover_relations.py` | Coreference resolution → sentence-level triple extraction → relation clustering + entity typing | fastcoref + REBEL + GLiNER + HDBSCAN |
@@ -52,9 +53,25 @@ pip install -r requirements.txt
 
 **1. Add your documents**
 
+From local `.txt` files:
 ```bash
 cp /path/to/your/documents/*.txt corpus/
 ```
+
+From S3 (JSON or JSONL format):
+```bash
+# One .json file per document — specify which field holds the text
+python scripts/00_ingest_s3.py s3://my-bucket/path/to/docs/ --text-field body
+
+# Single .jsonl file (one document per line)
+python scripts/00_ingest_s3.py s3://my-bucket/corpus.jsonl --text-field content --id-field doc_id
+
+# Quick test: first 50 docs only
+python scripts/00_ingest_s3.py s3://my-bucket/path/ --text-field body --limit 50 --clear
+```
+
+AWS credentials are read from the environment in the usual order:
+`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`, `~/.aws/credentials`, or an IAM role.
 
 **2. Run the full pipeline**
 
@@ -176,13 +193,16 @@ All files are written to `output/`.
 
 ---
 
-## Runtime estimates (1,000 docs, CPU)
+## Runtime estimates
 
-| Script | Approximate time |
-|--------|-----------------|
-| `01_characterize.py` | ~3 min |
-| `02_discover_entities.py` | ~1–2 hr (GLiNER active) |
-| `03_discover_relations.py` | ~5–8 hr (CPU) · ~1–2 hr (GPU) |
+| Script | 1,000 docs (CPU) | 4,000 docs (CPU) | 4,000 docs (GPU) |
+|--------|-----------------|-----------------|-----------------|
+| `01_characterize.py` | ~3 min | ~12 min | — |
+| `02_discover_entities.py` | ~1–2 hr | ~5–8 hr | — |
+| `03_discover_relations.py` | ~5–8 hr | ~20–30 hr | ~4–6 hr |
+
+For large corpora (4k+ docs), running script 03 on a GPU is strongly recommended.
+Set `REBEL_DEVICE=0` for CUDA or `REBEL_DEVICE=mps` for Apple Silicon.
 
 Scripts stream documents one at a time and checkpoint every 100 docs, so they
 are safe to leave running unattended and can be resumed if interrupted.

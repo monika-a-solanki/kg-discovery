@@ -14,6 +14,7 @@ dependencies = [
     "sentence-transformers>=3",
     "gliner>=0.2",              # zero-shot NER
     "fastcoref>=2.1",           # coreference resolution (transformer-based, spaCy 3.7 compatible)
+    "boto3>=1.34",              # S3 ingestion (script 00)
     # General English model — no domain-specific packages required.
     "en_core_web_md",
 ]
