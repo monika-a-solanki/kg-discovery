@@ -1,9 +1,8 @@
 """Shared helpers for the discovery prototype.
 
 Discovery is intentionally INDEPENDENT of any prior schema: no gazetteers,
-no hand-picked label lists, no predicate vocabulary from the json-to-graph
-project. Everything here works from the raw corpus text + general/biomedical
-NLP models only.
+no hand-picked label lists, no predicate vocabulary. Everything here works
+from raw corpus text + a general-purpose English NLP model only.
 """
 
 import re
@@ -13,8 +12,8 @@ ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "corpus"
 OUTPUT = ROOT / "output"
 
-# Strip the PMC reference/boilerplate tail and obvious non-body lines so the
-# linguistic models see prose, not citation lists. Deliberately light-touch.
+# Strip trailing reference/bibliography sections — common in papers, reports,
+# and articles — so models see prose, not citation lists. Light-touch.
 _REF_HEAD = re.compile(r"\n\s*(references|bibliography|acknowledg)", re.I)
 
 
@@ -27,7 +26,8 @@ def read_body(path: Path) -> str:
 
 
 def iter_docs(limit: int | None = None):
-    files = sorted(CORPUS.glob("PMC*.txt"))
+    """Yield (doc_id, body_text) for every .txt file in the corpus."""
+    files = sorted(CORPUS.glob("*.txt"))
     if limit:
         files = files[:limit]
     for f in files:

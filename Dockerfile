@@ -1,9 +1,7 @@
 # KG schema discovery — reproducible image built from uv.lock.
-# Base provides Python 3.12 (scispaCy wheels don't build on 3.13) + uv.
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# Flush stdout (the discovery scripts print progress) and silence the harmless
-# scispaCy regex warnings.
+# Flush stdout so discovery script progress lines appear in real time.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONWARNINGS=ignore \
     UV_LINK_MODE=copy \

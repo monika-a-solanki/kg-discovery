@@ -3,27 +3,21 @@ name = "kg-discovery"
 version = "0.1.0"
 description = "Corpus-grounded KG schema discovery (entity + relation types) with no pre-supplied labels and no generative LLM."
 readme = "README.md"
-# scispaCy model wheels do not build on 3.13 — pin the interpreter.
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.10"
 
 dependencies = [
-    "numpy==1.26.4",
+    "numpy>=1.26",
     "scipy>=1.13",
-    "spacy==3.7.5",
+    "spacy>=3.7,<4",
     "click>=8",
-    "scispacy==0.6.2",
     "scikit-learn>=1.4",
     "sentence-transformers>=3",
-    # scispaCy models pinned as direct URLs (no separate `spacy download` step).
-    "en_core_sci_md",
-    "en_ner_bc5cdr_md",
-    "en_ner_jnlpba_md",
+    # General English model — no domain-specific packages required.
+    "en_core_web_md",
 ]
 
 [tool.uv.sources]
-en_core_sci_md = { url = "https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_md-0.5.4.tar.gz" }
-en_ner_bc5cdr_md = { url = "https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_ner_bc5cdr_md-0.5.4.tar.gz" }
-en_ner_jnlpba_md = { url = "https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_ner_jnlpba_md-0.5.4.tar.gz" }
+en_core_web_md = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.1/en_core_web_md-3.7.1-py3-none-any.whl" }
 # Discovery is CPU-only. On Linux (Docker), pull the CPU torch build to avoid
 # ~5 GB of unused CUDA libraries. macOS keeps its default CPU/MPS build.
 torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
@@ -34,6 +28,4 @@ url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
 [tool.uv]
-# scispaCy 0.6.2 / spaCy 3.7.5 have loose transitive pins; the lockfile is what
-# guarantees reproducibility regardless.
 package = false

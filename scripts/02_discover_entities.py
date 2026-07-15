@@ -1,19 +1,19 @@
 """Step 2 - Entity-type DISCOVERY (open -> cluster -> name).
 
 Independent of any prior schema. Two signal sources, fused:
-  A) biomedical NER (scispaCy en_ner_bc5cdr_md + en_ner_jnlpba_md) -> what
-     recognized biomedical entity TYPES occur and how often.
-  B) frequent noun-chunk spans (en_core_sci_md) embedded with a sentence
-     encoder and clustered (KMeans) -> emergent candidate types the fixed
-     NER label set does not cover (buffers, process steps, glycoforms...).
+  A) General NER (spaCy en_core_web_md) -> what recognized entity TYPES occur
+     and how often across the corpus.
+  B) Frequent noun-chunk spans embedded with a sentence encoder and clustered
+     (KMeans) -> emergent candidate types the fixed NER label set does not
+     cover (domain-specific jargon, compound concepts, process terms, etc.).
 
-Hardened for full-corpus (1000-doc) scale:
+Hardened for large-corpus scale:
   - streams docs one at a time (no giant in-memory list)
   - hard per-doc char cap to bound memory
   - prints flushed progress every PROGRESS_EVERY docs
   - checkpoints raw counts to output/02_counts.json every CKPT_EVERY docs,
-    so the expensive NER pass survives a crash (clustering can be re-run
-    from the checkpoint via --cluster-only)
+    so the NER pass survives a crash (clustering can be re-run from the
+    checkpoint via --cluster-only)
 
 Outputs:
   output/02_counts.json    - raw aggregates (checkpoint, resumable)
@@ -52,11 +52,8 @@ def log(msg):
 
 
 def accumulate(limit):
-    bc5 = spacy.load("en_ner_bc5cdr_md")
-    jnl = spacy.load("en_ner_jnlpba_md")
-    sci = spacy.load("en_core_sci_md", disable=["ner"])
-    for n in (bc5, jnl, sci):
-        n.max_length = 2_000_000
+    nlp = spacy.load("en_core_web_md")
+    nlp.max_length = 2_000_000
 
     ner_types = Counter()
     ner_examples = defaultdict(Counter)
@@ -71,19 +68,15 @@ def accumulate(limit):
         }))
 
     i = 0
-    for pmcid, text in iter_docs(limit):
+    for doc_id, text in iter_docs(limit):
         i += 1
         t = text[:MAX_DOC_CHARS]
-        for nlp in (bc5, jnl):
-            with nlp.select_pipes(enable=["tok2vec", "ner"]):
-                d = nlp(t)
-            for e in d.ents:
-                txt = clean(e.text).lower()
-                if 2 < len(txt) < 40:
-                    ner_types[e.label_] += 1
-                    ner_examples[e.label_][txt] += 1
-            del d
-        d = sci(t)
+        d = nlp(t)
+        for e in d.ents:
+            txt = clean(e.text).lower()
+            if 2 < len(txt) < 80:
+                ner_types[e.label_] += 1
+                ner_examples[e.label_][txt] += 1
         for ch in d.noun_chunks:
             head = clean(ch.root.text).lower()
             if head.isalpha() and 3 < len(head) < 30:
@@ -133,7 +126,7 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
     (OUTPUT / "02_entities.json").write_text(json.dumps(result, indent=2))
 
     lines = ["ENTITY-TYPE DISCOVERY", "=" * 60, "",
-             "A) Biomedical NER label inventory (scispaCy):"]
+             "A) NER label inventory (spaCy en_core_web_md):"]
     for r in result["ner_types"]:
         lines.append(f"  {r['count']:>6}  {r['label']:<12}  e.g. {', '.join(r['examples'][:6])}")
     lines += ["", f"B) Emergent candidate types (noun-chunk clusters, k={k}):"]

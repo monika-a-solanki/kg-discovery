@@ -1,7 +1,7 @@
 """Step 1 - Corpus characterization.
 
 Answers "what domain shape am I dealing with?" before any extractor is built.
-Uses only general NLP (spaCy small model) + TF-IDF. No domain priors.
+Uses only general NLP (spaCy en_core_web_md) + TF-IDF. No domain priors.
 
 Outputs:
   output/01_characterization.txt  - human-readable summary
@@ -34,8 +34,8 @@ def main(limit=LIMIT):
     means = X.mean(axis=0).A1  # mean tf-idf per term = corpus-wide salience
     top = sorted(zip(vocab, means), key=lambda x: -x[1])[:60]
 
-    # Coarse keyphrase noun-chunk frequency via the biomedical base model.
-    nlp = spacy.load("en_core_sci_md", disable=["ner"])
+    # Coarse keyphrase noun-chunk frequency via the general English model.
+    nlp = spacy.load("en_core_web_md", disable=["ner"])
     nlp.max_length = 2_000_000
     chunk_freq = Counter()
     for _, t in docs[: min(n, 150)]:  # cap for speed

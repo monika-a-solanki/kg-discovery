@@ -11,14 +11,12 @@ click==8.4.1
 cloudpathlib==0.24.0
 colorama==0.4.6 ; sys_platform == 'win32'
 confection==0.1.5
-conllu==6.0.0
 cuda-bindings==13.3.1 ; sys_platform == 'linux'
 cuda-pathfinder==1.5.5 ; sys_platform == 'linux'
 cuda-toolkit==13.0.2 ; sys_platform == 'linux'
 cymem==2.0.13
-en-core-sci-md @ https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_md-0.5.4.tar.gz
-en-ner-bc5cdr-md @ https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_ner_bc5cdr_md-0.5.4.tar.gz
-en-ner-jnlpba-md @ https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_ner_jnlpba_md-0.5.4.tar.gz
+en-core-web-md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.1/en_core_web_md-3.7.1-py3-none-any.whl
+exceptiongroup==1.3.1 ; python_full_version < '3.11'
 filelock==3.29.1
 fsspec==2026.4.0
 h11==0.16.0
@@ -35,9 +33,9 @@ markupsafe==3.0.3
 mdurl==0.1.2
 mpmath==1.3.0
 murmurhash==1.0.15
-narwhals==2.22.1
-networkx==3.6.1
-nmslib-metabrainz==2.1.3
+narwhals==2.22.1 ; python_full_version >= '3.11'
+networkx==3.4.2 ; python_full_version < '3.11'
+networkx==3.6.1 ; python_full_version >= '3.11'
 numpy==1.26.4
 nvidia-cublas==13.1.1.3 ; sys_platform == 'linux'
 nvidia-cuda-cupti==13.0.85 ; sys_platform == 'linux'
@@ -56,20 +54,18 @@ nvidia-nvshmem-cu13==3.4.5 ; sys_platform == 'linux'
 nvidia-nvtx==13.0.85 ; sys_platform == 'linux'
 packaging==26.2
 preshed==3.0.13
-psutil==7.2.2
-pybind11==3.0.4
 pydantic==2.13.4
 pydantic-core==2.46.4
 pygments==2.20.0
-pysbd==0.3.4
 pyyaml==6.0.3
 regex==2026.5.9
 requests==2.34.2
 rich==15.0.0
 safetensors==0.7.0
-scikit-learn==1.9.0
-scipy==1.17.1
-scispacy==0.6.2
+scikit-learn==1.7.2 ; python_full_version < '3.11'
+scikit-learn==1.9.0 ; python_full_version >= '3.11'
+scipy==1.15.3 ; python_full_version < '3.11'
+scipy==1.17.1 ; python_full_version >= '3.11'
 sentence-transformers==5.5.1
 setuptools==81.0.0
 shellingham==1.5.4

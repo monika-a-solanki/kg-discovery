@@ -1,8 +1,8 @@
 """Step 3 - Relation-type DISCOVERY (OpenIE -> cluster -> name).
 
 No fixed predicate list. For each sentence:
-  1. Tag entity spans using the biomedical NER models (NOT gazetteers) -> this
-     is what keeps discovery independent of the prior schema.
+  1. Tag entity spans using the general NER model — keeps discovery independent
+     of any prior schema or domain-specific label vocabulary.
   2. For co-occurring entity pairs, extract the connecting predicate from the
      dependency parse (verb lemma on the path between the two entity heads,
      plus any governing preposition). Real OpenIE, not a verb list.
@@ -11,7 +11,7 @@ No fixed predicate list. For each sentence:
 Then cluster predicate lemmas by embedding so near-synonyms collapse into a
 candidate relation type, with dominant domain/range + examples.
 
-Hardened for full-corpus scale: streams docs, caps per-doc length, prints
+Hardened for large-corpus scale: streams docs, caps per-doc length, prints
 flushed progress, checkpoints raw triple counts every CKPT_EVERY docs so the
 expensive parse survives a crash (--cluster-only re-runs clustering only).
 
@@ -39,7 +39,13 @@ CKPT_EVERY = 100
 N_PRED_CLUSTERS = 18
 MIN_PRED_FREQ = 5
 EMBED_MODEL = "all-MiniLM-L6-v2"
-ENT_LABELS = {"DISEASE", "CHEMICAL", "PROTEIN", "CELL_LINE", "CELL_TYPE", "DNA", "RNA"}
+
+# Entity types to EXCLUDE from relation extraction.
+# CARDINAL and ORDINAL are almost never real entities ("first", "two", etc.).
+# Everything else the model finds is included so the pipeline works for any
+# domain — financial (MONEY), historical (DATE), scientific (QUANTITY), etc.
+# Narrow this set if your corpus produces too much numeric noise.
+ENT_LABELS_EXCLUDE = {"CARDINAL", "ORDINAL"}
 
 COUNTS = OUTPUT / "03_counts.json"
 
@@ -71,11 +77,8 @@ def dep_predicate(a_head, b_head):
 
 
 def accumulate(limit):
-    base = spacy.load("en_core_sci_md", disable=["ner"])
-    bc5 = spacy.load("en_ner_bc5cdr_md")
-    jnl = spacy.load("en_ner_jnlpba_md")
-    for n in (base, bc5, jnl):
-        n.max_length = 2_000_000
+    nlp = spacy.load("en_core_web_md")
+    nlp.max_length = 2_000_000
 
     triples = Counter()
     pred_freq = Counter()
@@ -93,18 +96,15 @@ def accumulate(limit):
         }))
 
     i = 0
-    for pmcid, text in iter_docs(limit):
+    for doc_id, text in iter_docs(limit):
         i += 1
         t = text[:MAX_DOC_CHARS]
-        doc = base(t)
-        spans = []
-        for nlp in (bc5, jnl):
-            with nlp.select_pipes(enable=["tok2vec", "ner"]):
-                nd = nlp(t)
-            for e in nd.ents:
-                if e.label_ in ENT_LABELS and 2 < len(e.text) < 40:
-                    spans.append((e.start_char, e.end_char, e.label_))
-            del nd
+        doc = nlp(t)
+        spans = [
+            (e.start_char, e.end_char, e.label_)
+            for e in doc.ents
+            if e.label_ not in ENT_LABELS_EXCLUDE and 2 < len(e.text) < 80
+        ]
         if len(spans) >= 2:
             for sent in doc.sents:
                 ss = [(s, e, l) for s, e, l in spans
