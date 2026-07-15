@@ -26,10 +26,22 @@ import re
 import sys
 from collections import Counter, defaultdict
 
+import numpy as np
 import spacy
 from gliner import GLiNER
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import HDBSCAN
+
+
+class _NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 from common import iter_docs, OUTPUT
 
@@ -179,7 +191,7 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
         ],
         "emergent_clusters": cluster_summaries,
     }
-    (OUTPUT / "02_entities.json").write_text(json.dumps(result, indent=2))
+    (OUTPUT / "02_entities.json").write_text(json.dumps(result, indent=2, cls=_NumpyEncoder))
 
     n_clusters = len(clusters)
     lines = ["ENTITY-TYPE DISCOVERY", "=" * 60, ""]

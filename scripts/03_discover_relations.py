@@ -31,6 +31,8 @@ import re
 import sys
 from collections import Counter, defaultdict
 
+import numpy as np
+
 import spacy
 from fastcoref import FCoref
 from gliner import GLiNER
@@ -39,6 +41,17 @@ from sklearn.cluster import HDBSCAN
 from transformers import pipeline as hf_pipeline
 
 from common import iter_docs, OUTPUT
+
+
+class _NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -320,7 +333,7 @@ def cluster_and_report(rel_freq, rel_examples, raw_triples):
         "top_typed_triples": typed_triples[:40],
         "relation_clusters": clusters_out,
     }
-    (OUTPUT / "03_relations.json").write_text(json.dumps(result, indent=2))
+    (OUTPUT / "03_relations.json").write_text(json.dumps(result, indent=2, cls=_NumpyEncoder))
 
     lines = [
         "RELATION-TYPE DISCOVERY", "=" * 60, "",
