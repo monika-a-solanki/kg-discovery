@@ -20,8 +20,8 @@ if [[ ! -f "$PY" ]]; then
     exit 1
 fi
 
-if [[ -z "$(ls corpus/*.txt 2>/dev/null)" ]]; then
-    echo "ERROR: No .txt files found in corpus/."
+if [[ -z "$(ls corpus/*.txt 2>/dev/null)" ]] && [[ -z "$(ls corpus/*.json 2>/dev/null)" ]]; then
+    echo "ERROR: No .txt or .json files found in corpus/."
     echo "  Place your documents there and re-run."
     exit 1
 fi

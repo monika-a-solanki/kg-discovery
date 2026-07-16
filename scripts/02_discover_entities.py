@@ -1,7 +1,7 @@
-"""Step 2 - Entity-type DISCOVERY (zero-shot NER → HDBSCAN clustering).
+"""Step 2 - Entity-type DISCOVERY (GLiNER2 zero-shot NER → HDBSCAN clustering).
 
 Two signal sources, fused:
-  A) GLiNER (zero-shot NER): extracts entity spans for any set of type labels
+  A) GLiNER2 (zero-shot NER): extracts entity spans for any set of type labels
      without domain-specific training. Labels are configurable at the top —
      adjust them to match the concepts you expect in your corpus.
   B) Frequent noun-chunk spans embedded and clustered with HDBSCAN: surfaces
@@ -28,7 +28,7 @@ from collections import Counter, defaultdict
 
 import numpy as np
 import spacy
-from gliner import GLiNER
+from gliner2 import GLiNER2
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import HDBSCAN
 
@@ -53,27 +53,23 @@ PROGRESS_EVERY = 25
 CKPT_EVERY = 100
 MIN_CHUNK_FREQ = 8     # min occurrences for a noun-chunk head to enter clustering
 MIN_CLUSTER_SIZE = 5   # HDBSCAN: fewest items that form a cluster
-EMBED_MODEL = "all-MiniLM-L6-v2"
-GLINER_MODEL = "urchade/gliner_medium-v2.1"
-GLINER_THRESHOLD = 0.5
+EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+GLINER2_MODEL = "fastino/gliner2-large-v1"
 
-# Seed labels for GLiNER zero-shot NER.
-# If you leave this empty, the NER track is skipped and only the unsupervised
-# noun-chunk clustering (Track B) runs — no domain knowledge required.
-# After running script 01 (characterization), use its top TF-IDF terms and
-# noun-chunk heads to decide what labels make sense for your corpus.
-ENTITY_LABELS: list[str] = [
-    "disease or condition",
-    "pathogen or virus",
-    "drug or therapeutic antibody",
-    "protein or gene",
-    "cell type or cell line",
-    "organism or animal model",
-    "tissue or organ",
-    "biological process",
-    "laboratory method or assay",
-    "treatment or therapy",
-]
+# Domain-specific entity labels with descriptions for GLiNER2.
+# GLiNER2 uses descriptions to improve precision — more specific = better results.
+ENTITY_LABELS = {
+    "equipment": "Equipment, instruments, machines, or devices used in manufacturing or laboratory",
+    "process": "Manufacturing steps, procedures, operations, or processes",
+    "material": "Chemical substances, gases, raw materials, excipients, or reagents",
+    "drug product": "Drug products, formulations, active pharmaceutical ingredients, or dosage forms",
+    "facility": "Buildings, rooms, cleanrooms, areas, or physical locations within a site",
+    "document": "Standard operating procedures, protocols, reports, or regulatory documents",
+    "organization": "Companies, departments, teams, or regulatory bodies",
+    "parameter": "Measurements, temperatures, pressures, flow rates, or process parameters",
+    "qualification": "Qualification activities, validation tests, or compliance checks",
+    "risk": "Risks, failure modes, deviations, or hazards",
+}
 
 COUNTS = OUTPUT / "02_counts.json"
 
@@ -92,12 +88,8 @@ def log(msg: str) -> None:
 
 
 def accumulate(limit):
-    if ENTITY_LABELS:
-        log("loading GLiNER…")
-        gliner: GLiNER | None = GLiNER.from_pretrained(GLINER_MODEL)
-    else:
-        log("ENTITY_LABELS is empty — NER track skipped; running noun-chunk discovery only.")
-        gliner = None
+    log("loading GLiNER2…")
+    extractor = GLiNER2.from_pretrained(GLINER2_MODEL)
 
     log("loading spaCy for noun chunks…")
     nlp = spacy.load("en_core_web_md", disable=["ner"])
@@ -120,15 +112,19 @@ def accumulate(limit):
         i += 1
         t = text[:MAX_DOC_CHARS]
 
-        # A) GLiNER zero-shot NER (only when labels are configured)
-        if gliner:
-            for ent in gliner.predict_entities(t, ENTITY_LABELS, threshold=GLINER_THRESHOLD):
-                txt = clean(ent["text"]).lower()
-                if 2 < len(txt) < 80:
-                    ner_types[ent["label"]] += 1
-                    ner_examples[ent["label"]][txt] += 1
+        # A) GLiNER2 zero-shot NER
+        try:
+            result = extractor.extract_entities(t, ENTITY_LABELS)
+            for label, mentions in result.get("entities", {}).items():
+                for mention in mentions:
+                    txt = clean(mention).lower()
+                    if 2 < len(txt) < 80:
+                        ner_types[label] += 1
+                        ner_examples[label][txt] += 1
+        except Exception:
+            pass
 
-        # B) Noun-chunk heads for emergent types — always runs, no labels needed
+        # B) Noun-chunk heads for emergent types
         doc = nlp(t)
         for ch in doc.noun_chunks:
             head = clean(ch.root.text).lower()
@@ -159,13 +155,13 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
     log("clustering with HDBSCAN (auto-discovers k)…")
     raw_labels = HDBSCAN(
         min_cluster_size=MIN_CLUSTER_SIZE,
-        metric="euclidean",           # normalized vectors → cosine-equivalent
+        metric="euclidean",
         cluster_selection_method="eom",
     ).fit_predict(emb)
 
     clusters: dict[int, list] = defaultdict(list)
     for term, lab in zip(candidates, raw_labels):
-        if lab != -1:  # -1 = noise point, not assigned to any cluster
+        if lab != -1:
             clusters[lab].append((term, chunk_freq[term]))
 
     cluster_summaries = []
@@ -180,7 +176,8 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
     cluster_summaries.sort(key=lambda x: -x["total_freq"])
 
     result = {
-        "gliner_labels": ENTITY_LABELS,
+        "ner_source": "GLiNER2 (fastino/gliner2-large-v1)",
+        "entity_labels": list(ENTITY_LABELS.keys()),
         "ner_types": [
             {
                 "label": lab,
@@ -196,12 +193,9 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
     n_clusters = len(clusters)
     lines = ["ENTITY-TYPE DISCOVERY", "=" * 60, ""]
     if result["ner_types"]:
-        lines.append(f"A) GLiNER zero-shot NER  ({len(ENTITY_LABELS)} labels, threshold={GLINER_THRESHOLD}):")
+        lines.append(f"A) GLiNER2 zero-shot NER  ({len(ENTITY_LABELS)} labels):")
         for r in result["ner_types"]:
             lines.append(f"  {r['count']:>6}  {r['label']:<25}  e.g. {', '.join(r['examples'][:5])}")
-        lines.append("")
-    else:
-        lines.append("A) GLiNER NER — skipped (ENTITY_LABELS is empty; set labels in the script to enable)")
         lines.append("")
     lines.append(f"B) Emergent types — noun-chunk HDBSCAN  ({n_clusters} clusters discovered):")
     for c in cluster_summaries:
@@ -217,6 +211,7 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
 
 
 def main():
+    OUTPUT.mkdir(exist_ok=True)
     if "--cluster-only" in sys.argv:
         data = json.loads(COUNTS.read_text())
         log(f"loaded checkpoint: {data['docs_processed']} docs")
