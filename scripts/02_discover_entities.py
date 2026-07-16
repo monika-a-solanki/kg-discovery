@@ -27,6 +27,7 @@ import sys
 from collections import Counter, defaultdict
 
 import numpy as np
+import torch
 import spacy
 from gliner2 import GLiNER2
 from sentence_transformers import SentenceTransformer
@@ -89,8 +90,9 @@ def log(msg: str) -> None:
 
 
 def accumulate(limit):
-    log("loading GLiNER2…")
-    extractor = GLiNER2.from_pretrained(GLINER2_MODEL)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    log(f"loading GLiNER2 on {device}…")
+    extractor = GLiNER2.from_pretrained(GLINER2_MODEL).to(device)
 
     log("loading spaCy for noun chunks…")
     nlp = spacy.load("en_core_web_md", disable=["ner"])
