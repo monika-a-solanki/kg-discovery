@@ -65,11 +65,23 @@ MAX_LABELS = 30        # max entity labels to derive from characterization
 COUNTS = OUTPUT / "02_counts.json"
 
 
+_STOPWORDS = {
+    "image", "date", "columns", "summary", "text", "table", "page", "pages",
+    "column", "that", "this", "which", "number", "name", "information",
+    "logo", "section", "appendix", "details", "note", "notes", "comments",
+    "list", "values", "description", "version", "form", "status", "type",
+    "shows", "appears", "various", "used", "yes", "time",
+    # Swedish stopwords from bilingual corpus
+    "och", "för", "att", "med", "till", "som", "är", "enligt",
+    "riskbedömning", "på", "av",
+}
+
+
 def derive_entity_labels() -> dict[str, str]:
     """Derive entity labels from script 01's characterization output.
 
-    Groups top TF-IDF terms and noun-chunk heads into candidate entity types.
-    Each label is a term from the corpus; the description helps GLiNER2 precision.
+    Filters out document-structure noise and stopwords, then uses the remaining
+    domain terms as entity labels for GLiNER2.
     """
     if not CHARACT_PATH.exists():
         raise FileNotFoundError(
@@ -77,23 +89,25 @@ def derive_entity_labels() -> dict[str, str]:
         )
     data = json.loads(CHARACT_PATH.read_text())
 
-    # Combine top TF-IDF terms and noun-chunk heads as candidate labels
     seen = set()
     candidates = []
 
+    # Noun-chunk heads first (most entity-like terms)
     for item in data.get("top_noun_chunks", []):
         term = item["term"].lower().strip()
-        if term not in seen and len(term) > 3 and term.isalpha():
+        if (term not in seen and term not in _STOPWORDS
+                and len(term) > 3 and term.isalpha()):
             seen.add(term)
             candidates.append(term)
 
+    # Then TF-IDF terms (fill gaps)
     for item in data.get("top_tfidf", []):
         term = item["term"].lower().strip()
-        if term not in seen and len(term) > 3 and " " not in term and term.isalpha():
+        if (term not in seen and term not in _STOPWORDS
+                and len(term) > 3 and " " not in term and term.isalpha()):
             seen.add(term)
             candidates.append(term)
 
-    # Use top candidates as entity labels with auto-generated descriptions
     labels = {}
     for term in candidates[:MAX_LABELS]:
         labels[term] = f"Instances, mentions, or references to {term}"
