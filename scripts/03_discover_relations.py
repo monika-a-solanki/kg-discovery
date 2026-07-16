@@ -100,6 +100,7 @@ def load_glirel():
     state = torch.load(GLIREL_MODEL_PATH + '/pytorch_model.bin', map_location='cpu')
     model.load_state_dict(state, strict=False)
     model.eval()
+    model.float()
     model.to(device)
     return model
 
