@@ -1,9 +1,11 @@
 """Step 2 - Entity-type DISCOVERY (GLiNER2 zero-shot NER → HDBSCAN clustering).
 
+Reads output/01_characterization.json to derive entity labels from the corpus
+vocabulary — no hardcoded domain assumptions.
+
 Two signal sources, fused:
-  A) GLiNER2 (zero-shot NER): extracts entity spans for any set of type labels
-     without domain-specific training. Labels are configurable at the top —
-     adjust them to match the concepts you expect in your corpus.
+  A) GLiNER2 (zero-shot NER): entity labels are derived from top TF-IDF terms
+     and noun-chunk heads found during characterization.
   B) Frequent noun-chunk spans embedded and clustered with HDBSCAN: surfaces
      emergent concepts that fall outside the label set. Cluster count is
      discovered automatically — no fixed k.
@@ -57,23 +59,46 @@ MIN_CHUNK_FREQ = 8     # min occurrences for a noun-chunk head to enter clusteri
 MIN_CLUSTER_SIZE = 5   # HDBSCAN: fewest items that form a cluster
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 GLINER2_MODEL = "fastino/gliner2-large-v1"
-
-# Domain-specific entity labels with descriptions for GLiNER2.
-# GLiNER2 uses descriptions to improve precision — more specific = better results.
-ENTITY_LABELS = {
-    "equipment": "Equipment, instruments, machines, or devices used in manufacturing or laboratory",
-    "process": "Manufacturing steps, procedures, operations, or processes",
-    "material": "Chemical substances, gases, raw materials, excipients, or reagents",
-    "drug product": "Drug products, formulations, active pharmaceutical ingredients, or dosage forms",
-    "facility": "Buildings, rooms, cleanrooms, areas, or physical locations within a site",
-    "document": "Standard operating procedures, protocols, reports, or regulatory documents",
-    "organization": "Companies, departments, teams, or regulatory bodies",
-    "parameter": "Measurements, temperatures, pressures, flow rates, or process parameters",
-    "qualification": "Qualification activities, validation tests, or compliance checks",
-    "risk": "Risks, failure modes, deviations, or hazards",
-}
+CHARACT_PATH = OUTPUT / "01_characterization.json"
+MAX_LABELS = 30        # max entity labels to derive from characterization
 
 COUNTS = OUTPUT / "02_counts.json"
+
+
+def derive_entity_labels() -> dict[str, str]:
+    """Derive entity labels from script 01's characterization output.
+
+    Groups top TF-IDF terms and noun-chunk heads into candidate entity types.
+    Each label is a term from the corpus; the description helps GLiNER2 precision.
+    """
+    if not CHARACT_PATH.exists():
+        raise FileNotFoundError(
+            f"{CHARACT_PATH} not found — run script 01_characterize.py first"
+        )
+    data = json.loads(CHARACT_PATH.read_text())
+
+    # Combine top TF-IDF terms and noun-chunk heads as candidate labels
+    seen = set()
+    candidates = []
+
+    for item in data.get("top_noun_chunks", []):
+        term = item["term"].lower().strip()
+        if term not in seen and len(term) > 3 and term.isalpha():
+            seen.add(term)
+            candidates.append(term)
+
+    for item in data.get("top_tfidf", []):
+        term = item["term"].lower().strip()
+        if term not in seen and len(term) > 3 and " " not in term and term.isalpha():
+            seen.add(term)
+            candidates.append(term)
+
+    # Use top candidates as entity labels with auto-generated descriptions
+    labels = {}
+    for term in candidates[:MAX_LABELS]:
+        labels[term] = f"Instances, mentions, or references to {term}"
+
+    return labels
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -89,7 +114,7 @@ def log(msg: str) -> None:
 # ── Accumulation pass ─────────────────────────────────────────────────────────
 
 
-def accumulate(limit):
+def accumulate(limit, entity_labels):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log(f"loading GLiNER2 on {device}…")
     extractor = GLiNER2.from_pretrained(GLINER2_MODEL).to(device)
@@ -97,6 +122,8 @@ def accumulate(limit):
     log("loading spaCy for noun chunks…")
     nlp = spacy.load("en_core_web_md", disable=["ner"])
     nlp.max_length = 2_000_000
+
+    log(f"entity labels ({len(entity_labels)}): {', '.join(entity_labels.keys())}")
 
     ner_types: Counter = Counter()
     ner_examples: dict[str, Counter] = defaultdict(Counter)
@@ -121,7 +148,7 @@ def accumulate(limit):
             if len(chunk.strip()) < 20:
                 continue
             try:
-                result = extractor.extract_entities(chunk, ENTITY_LABELS)
+                result = extractor.extract_entities(chunk, entity_labels)
                 for label, mentions in result.get("entities", {}).items():
                     for mention in mentions:
                         txt = clean(mention).lower()
@@ -152,7 +179,7 @@ def accumulate(limit):
 # ── Clustering + report ───────────────────────────────────────────────────────
 
 
-def cluster_and_report(ner_types, ner_examples, chunk_freq):
+def cluster_and_report(ner_types, ner_examples, chunk_freq, entity_labels):
     candidates = [h for h, c in chunk_freq.items() if c >= MIN_CHUNK_FREQ]
     log(f"embedding {len(candidates)} noun-chunk heads…")
 
@@ -184,7 +211,7 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
 
     result = {
         "ner_source": "GLiNER2 (fastino/gliner2-large-v1)",
-        "entity_labels": list(ENTITY_LABELS.keys()),
+        "entity_labels": list(entity_labels.keys()),
         "ner_types": [
             {
                 "label": lab,
@@ -200,7 +227,7 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
     n_clusters = len(clusters)
     lines = ["ENTITY-TYPE DISCOVERY", "=" * 60, ""]
     if result["ner_types"]:
-        lines.append(f"A) GLiNER2 zero-shot NER  ({len(ENTITY_LABELS)} labels):")
+        lines.append(f"A) GLiNER2 zero-shot NER  ({len(entity_labels)} labels):")
         for r in result["ner_types"]:
             lines.append(f"  {r['count']:>6}  {r['label']:<25}  e.g. {', '.join(r['examples'][:5])}")
         lines.append("")
@@ -219,6 +246,9 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq):
 
 def main():
     OUTPUT.mkdir(exist_ok=True)
+    log("deriving entity labels from characterization…")
+    entity_labels = derive_entity_labels()
+
     if "--cluster-only" in sys.argv:
         data = json.loads(COUNTS.read_text())
         log(f"loaded checkpoint: {data['docs_processed']} docs")
@@ -226,12 +256,13 @@ def main():
             Counter(data["ner_types"]),
             {k: Counter(v) for k, v in data["ner_examples"].items()},
             Counter(data["chunk_freq"]),
+            entity_labels,
         )
         return
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     limit = int(args[0]) if args else LIMIT
-    ner_types, ner_examples, chunk_freq = accumulate(limit)
-    cluster_and_report(ner_types, ner_examples, chunk_freq)
+    ner_types, ner_examples, chunk_freq = accumulate(limit, entity_labels)
+    cluster_and_report(ner_types, ner_examples, chunk_freq, entity_labels)
 
 
 if __name__ == "__main__":

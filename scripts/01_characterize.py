@@ -4,9 +4,11 @@ Answers "what domain shape am I dealing with?" before any extractor is built.
 Uses only general NLP (spaCy en_core_web_md) + TF-IDF. No domain priors.
 
 Outputs:
+  output/01_characterization.json - structured output (consumed by script 02)
   output/01_characterization.txt  - human-readable summary
 """
 
+import json
 from collections import Counter
 
 import spacy
@@ -18,6 +20,7 @@ LIMIT = None  # set e.g. 200 for a quick pass
 
 
 def main(limit=LIMIT):
+    OUTPUT.mkdir(exist_ok=True)
     docs = list(iter_docs(limit))
     n = len(docs)
     lengths = [len(t) for _, t in docs]
@@ -32,19 +35,37 @@ def main(limit=LIMIT):
     X = vec.fit_transform(texts)
     vocab = vec.get_feature_names_out()
     means = X.mean(axis=0).A1  # mean tf-idf per term = corpus-wide salience
-    top = sorted(zip(vocab, means), key=lambda x: -x[1])[:60]
+    top = sorted(zip(vocab, means), key=lambda x: -x[1])[:100]
 
     # Coarse keyphrase noun-chunk frequency via the general English model.
     nlp = spacy.load("en_core_web_md", disable=["ner"])
     nlp.max_length = 2_000_000
     chunk_freq = Counter()
-    for _, t in docs[: min(n, 150)]:  # cap for speed
+    for _, t in docs[: min(n, 300)]:
         doc = nlp(t[:200_000])
         for ch in doc.noun_chunks:
             h = ch.root.text.lower()
             if h.isalpha() and len(h) > 3:
                 chunk_freq[h] += 1
 
+    # Structured output for downstream scripts
+    result = {
+        "n_docs": n,
+        "chars_per_doc": {
+            "min": min(lengths),
+            "median": sorted(lengths)[n // 2],
+            "max": max(lengths),
+        },
+        "top_tfidf": [{"term": t, "score": round(s, 5)} for t, s in top],
+        "top_noun_chunks": [
+            {"term": h, "freq": c} for h, c in chunk_freq.most_common(100)
+        ],
+    }
+    (OUTPUT / "01_characterization.json").write_text(
+        json.dumps(result, indent=2)
+    )
+
+    # Human-readable report
     lines = []
     lines.append(f"CORPUS CHARACTERIZATION  ({n} documents)")
     lines.append("=" * 60)
@@ -52,7 +73,7 @@ def main(limit=LIMIT):
     lines.append(f"sents/doc:  median={sorted(n_sents)[n//2]}")
     lines.append("")
     lines.append("Top TF-IDF terms (corpus-salient vocabulary):")
-    for term, sc in top:
+    for term, sc in top[:60]:
         lines.append(f"  {sc:.4f}  {term}")
     lines.append("")
     lines.append("Most frequent noun-chunk heads (candidate entity anchors):")
