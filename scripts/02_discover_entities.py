@@ -49,6 +49,7 @@ from common import iter_docs, OUTPUT
 
 LIMIT = None           # None = whole corpus; set e.g. 100 for a quick test run
 MAX_DOC_CHARS = 120_000
+CHUNK_SIZE = 2000      # chars per GLiNER2 call (model encoder max is ~512 tokens)
 PROGRESS_EVERY = 25
 CKPT_EVERY = 100
 MIN_CHUNK_FREQ = 8     # min occurrences for a noun-chunk head to enter clustering
@@ -112,17 +113,21 @@ def accumulate(limit):
         i += 1
         t = text[:MAX_DOC_CHARS]
 
-        # A) GLiNER2 zero-shot NER
-        try:
-            result = extractor.extract_entities(t, ENTITY_LABELS)
-            for label, mentions in result.get("entities", {}).items():
-                for mention in mentions:
-                    txt = clean(mention).lower()
-                    if 2 < len(txt) < 80:
-                        ner_types[label] += 1
-                        ner_examples[label][txt] += 1
-        except Exception:
-            pass
+        # A) GLiNER2 zero-shot NER (chunked — model encoder is limited to ~512 tokens)
+        for start in range(0, len(t), CHUNK_SIZE):
+            chunk = t[start:start + CHUNK_SIZE]
+            if len(chunk.strip()) < 20:
+                continue
+            try:
+                result = extractor.extract_entities(chunk, ENTITY_LABELS)
+                for label, mentions in result.get("entities", {}).items():
+                    for mention in mentions:
+                        txt = clean(mention).lower()
+                        if 2 < len(txt) < 80:
+                            ner_types[label] += 1
+                            ner_examples[label][txt] += 1
+            except Exception:
+                pass
 
         # B) Noun-chunk heads for emergent types
         doc = nlp(t)
