@@ -250,7 +250,7 @@ def cluster_and_report(ner_types, ner_examples, chunk_freq, entity_labels):
         terms = ", ".join(m["term"] for m in c["members"][:8])
         lines.append(f"  [{c['total_freq']:>5}]  ~{c['label_hint']}: {terms}")
 
-    (OUTPUT / "02_entities.txt").write_text("\n".join(lines))
+    (OUTPUT / "02_entities.txt").write_text("\n".join(lines), encoding="utf-8")
     log("\n".join(lines))
     log(f"\n→ {OUTPUT / '02_entities.json'}")
 
