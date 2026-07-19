@@ -1,0 +1,409 @@
+{
+  "description": "GLiNER entity labels, GLiREL relation labels, and spaCy EntityRuler gazetteer patterns extracted from scalable-ai-all-cv.ttl",
+  "source": "AZGraphRAG/ontologies/scalable-ai-all-cv.ttl",
+  "gliner": {
+    "description": "Entity type labels for GLiNER zero-shot NER. These represent semantic categories the model uses to identify entity spans in text.",
+    "entity_labels": [
+      "spray dryer",
+      "homogenizer",
+      "high shear mixer",
+      "tank",
+      "feedstock tank",
+      "coarse emulsion tank",
+      "annex tank",
+      "L2 spray dryer",
+      "large scale platform dryer",
+      "prototype large scale platform dryer",
+      "compact dryer",
+      "C-55 homogenizer",
+      "microfluidics homogenizer",
+      "CES high shear mixer",
+      "T50 high shear mixer",
+      "manufacturing site",
+      "AstraZeneca manufacturing site",
+      "Durham manufacturing site",
+      "Redwood City manufacturing site",
+      "Snäckviken manufacturing site",
+      "porous particle",
+      "spray drying process",
+      "feedstock preparation process",
+      "drug compound",
+      "inhaled biologic",
+      "contract manufacturer",
+      "vendor",
+      "third party supplier",
+      "autoinjector",
+      "inhaler",
+      "dry powder inhaler",
+      "metered dose inhaler",
+      "soft mist inhaler",
+      "pen injector",
+      "syringe",
+      "pre-filled syringe",
+      "safety syringe",
+      "implant delivery device",
+      "actuator",
+      "canister assembly",
+      "canister",
+      "valve",
+      "mouthpiece",
+      "mouthpiece cap",
+      "dose indicator",
+      "cap",
+      "end cap",
+      "needle",
+      "needle cover",
+      "syringe barrel",
+      "plunger",
+      "plunger rod",
+      "finger flange",
+      "hub",
+      "spring",
+      "trigger",
+      "shield body",
+      "shield sleeve",
+      "push rod",
+      "push rod clip",
+      "thumb push",
+      "implant chamber",
+      "device body",
+      "upper constriction ring",
+      "lower constriction ring",
+      "desiccant component",
+      "component label",
+      "drug substance",
+      "drug product",
+      "drug product intermediate",
+      "excipient",
+      "starting material",
+      "intermediate",
+      "raw material",
+      "reagent",
+      "analytical reagent",
+      "solvent",
+      "reference standard",
+      "impurity standard",
+      "in-process material",
+      "primary packaging component",
+      "secondary packaging component",
+      "printed packaging component",
+      "labeling component",
+      "finished pack",
+      "combination product",
+      "device component"
+    ]
+  },
+  "glirel": {
+    "description": "Relationship labels for GLiREL zero-shot relation extraction. Inverse pairs are included so relationships are captured regardless of entity order in text.",
+    "relation_labels": [
+      "has equipment",
+      "has material",
+      "has process",
+      "has product",
+      "has site",
+      "has third party",
+      "has dosage form",
+      "has therapy area",
+      "has document type",
+      "is equipment for",
+      "uses equipment",
+      "is instrument for",
+      "uses instruments",
+      "is document for",
+      "is dosage form for",
+      "is indication for"
+    ]
+  },
+  "gazetteer": {
+    "description": "spaCy EntityRuler patterns built from all skosxl:prefLabel and skosxl:altLabel values in the vocabulary. Use these to catch exact abbreviations and codes that GLiNER may miss. Set overwrite_ents=True so these take priority over GLiNER predictions on known terms.",
+    "patterns": [
+
+      {"label": "manufacturing site", "pattern": "AZ Site"},
+      {"label": "manufacturing site", "pattern": "Durham, N.C., US"},
+      {"label": "manufacturing site", "pattern": "Durham"},
+      {"label": "manufacturing site", "pattern": "RTP"},
+      {"label": "manufacturing site", "pattern": "Research Triangle Park"},
+      {"label": "manufacturing site", "pattern": "Durham site"},
+      {"label": "manufacturing site", "pattern": "NC site"},
+      {"label": "manufacturing site", "pattern": "Redwood City, C.A. US"},
+      {"label": "manufacturing site", "pattern": "Redwood City"},
+      {"label": "manufacturing site", "pattern": "RWC"},
+      {"label": "manufacturing site", "pattern": "RWC site"},
+      {"label": "manufacturing site", "pattern": "Redwood City site"},
+      {"label": "manufacturing site", "pattern": "Snäckviken, Sweden"},
+      {"label": "manufacturing site", "pattern": "Snäckviken"},
+      {"label": "manufacturing site", "pattern": "SweOps"},
+      {"label": "manufacturing site", "pattern": "Snäckviken site"},
+      {"label": "manufacturing site", "pattern": "Sweden site"},
+      {"label": "manufacturing site", "pattern": "Manufacturing Site"},
+
+      {"label": "high shear mixer", "pattern": "High Shear Mixer"},
+      {"label": "high shear mixer", "pattern": "HSM"},
+      {"label": "high shear mixer", "pattern": "Rotor-stator mixer"},
+      {"label": "high shear mixer", "pattern": "CES"},
+      {"label": "high shear mixer", "pattern": "Course Emulsion Skid"},
+      {"label": "high shear mixer", "pattern": "In-line"},
+      {"label": "high shear mixer", "pattern": "CES mixer"},
+      {"label": "high shear mixer", "pattern": "Emulsification system"},
+      {"label": "high shear mixer", "pattern": "T50"},
+      {"label": "high shear mixer", "pattern": "T-50"},
+      {"label": "high shear mixer", "pattern": "Overhead high shear mixer"},
+      {"label": "high shear mixer", "pattern": "T50 mixer"},
+
+      {"label": "homogenizer", "pattern": "Homogenizer"},
+      {"label": "homogenizer", "pattern": "Homogenisation equipment"},
+      {"label": "homogenizer", "pattern": "C-55"},
+      {"label": "homogenizer", "pattern": "Avestin"},
+      {"label": "homogenizer", "pattern": "C55 homogenizer"},
+      {"label": "homogenizer", "pattern": "C55 unit"},
+      {"label": "homogenizer", "pattern": "Microfluidics"},
+      {"label": "homogenizer", "pattern": "Microfluidics homogenizer"},
+      {"label": "homogenizer", "pattern": "Microfluidic processor"},
+
+      {"label": "spray dryer", "pattern": "Spray Dryer"},
+      {"label": "spray dryer", "pattern": "Spray drying equipment"},
+      {"label": "spray dryer", "pattern": "L2"},
+      {"label": "spray dryer", "pattern": "L2 Spray Dryer"},
+      {"label": "spray dryer", "pattern": "LSPD"},
+      {"label": "spray dryer", "pattern": "Large Scale Platform Dryer"},
+      {"label": "spray dryer", "pattern": "LSPD unit"},
+      {"label": "spray dryer", "pattern": "Prototype LSPD"},
+      {"label": "spray dryer", "pattern": "LSPD prototype"},
+      {"label": "spray dryer", "pattern": "LSD"},
+      {"label": "spray dryer", "pattern": "Large Scale Dryer"},
+      {"label": "spray dryer", "pattern": "Parsec Dryer"},
+      {"label": "spray dryer", "pattern": "Prototype Large Scale Platform Dryer"},
+      {"label": "spray dryer", "pattern": "SDP"},
+      {"label": "spray dryer", "pattern": "Compact Dryer"},
+
+      {"label": "tank", "pattern": "Tank"},
+      {"label": "tank", "pattern": "Storage tank"},
+      {"label": "tank", "pattern": "Vessel"},
+      {"label": "tank", "pattern": "Annex Tank"},
+      {"label": "tank", "pattern": "Annex vessel"},
+      {"label": "tank", "pattern": "Auxiliary tank"},
+      {"label": "tank", "pattern": "Coarse Emulsion Tank"},
+      {"label": "tank", "pattern": "CE tank"},
+      {"label": "tank", "pattern": "Feedstock Tank"},
+
+      {"label": "porous particle", "pattern": "Porous Particle"},
+      {"label": "porous particle", "pattern": "PP"},
+      {"label": "porous particle", "pattern": "Porous particles"},
+
+      {"label": "spray drying process", "pattern": "Spray Drying"},
+      {"label": "spray drying process", "pattern": "Spray-drying"},
+
+      {"label": "feedstock preparation process", "pattern": "Feedstock Preparation"},
+      {"label": "feedstock preparation process", "pattern": "Feed prep"},
+      {"label": "feedstock preparation process", "pattern": "Formulation preparation"},
+      {"label": "feedstock preparation process", "pattern": "Solution prep"},
+
+      {"label": "drug compound", "pattern": "AZD8630"},
+      {"label": "drug compound", "pattern": "AZD-8630"},
+      {"label": "drug compound", "pattern": "AZD 8630 compound"},
+      {"label": "drug compound", "pattern": "IB"},
+      {"label": "drug compound", "pattern": "Inhaled Biologic"},
+
+      {"label": "vendor", "pattern": "Parsec"},
+      {"label": "vendor", "pattern": "Parsec vendor"},
+      {"label": "vendor", "pattern": "Parsec supplier"},
+
+      {"label": "contract manufacturer", "pattern": "CMO"},
+      {"label": "contract manufacturer", "pattern": "Contract Manufacturer"},
+      {"label": "contract manufacturer", "pattern": "3rd Party (Vendor/CMO…)"},
+
+      {"label": "autoinjector", "pattern": "Autoinjector"},
+      {"label": "autoinjector", "pattern": "Auto-injector"},
+      {"label": "autoinjector", "pattern": "AI"},
+
+      {"label": "implant delivery device", "pattern": "Implant Delivery Device"},
+      {"label": "implant delivery device", "pattern": "Subcutaneous Implant Applicator"},
+
+      {"label": "inhaler", "pattern": "Inhaler"},
+
+      {"label": "dry powder inhaler", "pattern": "Dry Powder Inhaler"},
+      {"label": "dry powder inhaler", "pattern": "DPI"},
+
+      {"label": "metered dose inhaler", "pattern": "Metered Dose Inhaler"},
+      {"label": "metered dose inhaler", "pattern": "MDI"},
+      {"label": "metered dose inhaler", "pattern": "pMDI"},
+      {"label": "metered dose inhaler", "pattern": "Pressurised Metered Dose Inhaler"},
+
+      {"label": "soft mist inhaler", "pattern": "Soft Mist Inhaler"},
+      {"label": "soft mist inhaler", "pattern": "SMI"},
+
+      {"label": "pen injector", "pattern": "Pen Injector"},
+      {"label": "pen injector", "pattern": "Injection Pen"},
+
+      {"label": "syringe", "pattern": "Syringe"},
+
+      {"label": "pre-filled syringe", "pattern": "Pre-filled Syringe"},
+      {"label": "pre-filled syringe", "pattern": "Prefilled Syringe"},
+      {"label": "pre-filled syringe", "pattern": "PFS"},
+
+      {"label": "safety syringe", "pattern": "Safety Syringe"},
+      {"label": "safety syringe", "pattern": "NSD"},
+      {"label": "safety syringe", "pattern": "Needle Safety Device"},
+
+      {"label": "actuator", "pattern": "Actuator"},
+      {"label": "actuator", "pattern": "Actuator Body"},
+
+      {"label": "canister assembly", "pattern": "Canister Assembly"},
+
+      {"label": "canister", "pattern": "Canister"},
+      {"label": "canister", "pattern": "Container"},
+
+      {"label": "valve", "pattern": "Valve"},
+      {"label": "valve", "pattern": "Metering Valve"},
+
+      {"label": "cap", "pattern": "Cap"},
+
+      {"label": "end cap", "pattern": "End Cap"},
+
+      {"label": "mouthpiece cap", "pattern": "Mouthpiece Cap"},
+      {"label": "mouthpiece cap", "pattern": "Dust Cap"},
+
+      {"label": "needle cover", "pattern": "Needle Cover"},
+      {"label": "needle cover", "pattern": "Needle Cap"},
+      {"label": "needle cover", "pattern": "RNS"},
+      {"label": "needle cover", "pattern": "Rigid Needle Shield"},
+
+      {"label": "component label", "pattern": "Component Label"},
+      {"label": "component label", "pattern": "Device Label"},
+
+      {"label": "desiccant component", "pattern": "Desiccant Component"},
+      {"label": "desiccant component", "pattern": "Desiccant Sachet"},
+      {"label": "desiccant component", "pattern": "Desiccant"},
+
+      {"label": "device body", "pattern": "Device Body"},
+      {"label": "device body", "pattern": "Device Housing"},
+      {"label": "device body", "pattern": "Housing"},
+
+      {"label": "dose indicator", "pattern": "Dose Indicator"},
+      {"label": "dose indicator", "pattern": "Dose Counter"},
+      {"label": "dose indicator", "pattern": "Actuation Counter"},
+
+      {"label": "finger flange", "pattern": "Finger Flange"},
+      {"label": "finger flange", "pattern": "Finger Grip"},
+      {"label": "finger flange", "pattern": "Flange"},
+
+      {"label": "hub", "pattern": "Hub"},
+      {"label": "hub", "pattern": "Luer Hub"},
+      {"label": "hub", "pattern": "Needle Hub"},
+
+      {"label": "implant chamber", "pattern": "Implant Chamber"},
+      {"label": "implant chamber", "pattern": "Depot Chamber"},
+
+      {"label": "lower constriction ring", "pattern": "Lower Constriction Ring"},
+
+      {"label": "mouthpiece", "pattern": "Mouthpiece"},
+
+      {"label": "needle", "pattern": "Needle"},
+      {"label": "needle", "pattern": "Injection Needle"},
+
+      {"label": "plunger", "pattern": "Plunger"},
+      {"label": "plunger", "pattern": "Bung"},
+      {"label": "plunger", "pattern": "Plunger Stopper"},
+
+      {"label": "plunger rod", "pattern": "Plunger Rod"},
+      {"label": "plunger rod", "pattern": "Piston Rod"},
+
+      {"label": "push rod", "pattern": "Push Rod"},
+
+      {"label": "push rod clip", "pattern": "Push Rod Clip"},
+      {"label": "push rod clip", "pattern": "Retaining Clip"},
+
+      {"label": "shield body", "pattern": "Shield Body"},
+      {"label": "shield body", "pattern": "Needle Guard Body"},
+
+      {"label": "shield sleeve", "pattern": "Shield Sleeve"},
+      {"label": "shield sleeve", "pattern": "Guard Sleeve"},
+
+      {"label": "spring", "pattern": "Spring"},
+
+      {"label": "syringe barrel", "pattern": "Syringe Barrel"},
+      {"label": "syringe barrel", "pattern": "Barrel"},
+
+      {"label": "thumb push", "pattern": "Thumb Push"},
+      {"label": "thumb push", "pattern": "Thumb Button"},
+
+      {"label": "trigger", "pattern": "Trigger"},
+
+      {"label": "upper constriction ring", "pattern": "Upper Constriction Ring"},
+
+      {"label": "drug substance", "pattern": "Drug Substance"},
+      {"label": "drug substance", "pattern": "API"},
+      {"label": "drug substance", "pattern": "Active Pharmaceutical Ingredient"},
+      {"label": "drug substance", "pattern": "Active Substance"},
+      {"label": "drug substance", "pattern": "DS"},
+      {"label": "drug substance", "pattern": "Active ingredient"},
+
+      {"label": "drug product", "pattern": "Drug Product"},
+      {"label": "drug product", "pattern": "DP"},
+      {"label": "drug product", "pattern": "Finished Drug Product"},
+      {"label": "drug product", "pattern": "Medicinal Product"},
+
+      {"label": "drug product intermediate", "pattern": "Drug Product Intermediate"},
+      {"label": "drug product intermediate", "pattern": "Bulk Drug Product"},
+
+      {"label": "excipient", "pattern": "Excipient"},
+      {"label": "excipient", "pattern": "Inactive Ingredient"},
+
+      {"label": "finished pack", "pattern": "Finished Pack"},
+      {"label": "finished pack", "pattern": "Finished Good"},
+      {"label": "finished pack", "pattern": "FG"},
+      {"label": "finished pack", "pattern": "Packaged Medicinal Product"},
+
+      {"label": "impurity standard", "pattern": "Impurity Standard"},
+      {"label": "impurity standard", "pattern": "Impurity Reference Standard"},
+
+      {"label": "in-process material", "pattern": "In-Process Material"},
+      {"label": "in-process material", "pattern": "IPC Material"},
+      {"label": "in-process material", "pattern": "In-Process Control Material"},
+
+      {"label": "intermediate", "pattern": "Intermediate"},
+      {"label": "intermediate", "pattern": "API Intermediate"},
+      {"label": "intermediate", "pattern": "Synthetic Intermediate"},
+
+      {"label": "labeling component", "pattern": "Labeling Component"},
+      {"label": "labeling component", "pattern": "Applied Label"},
+
+      {"label": "primary packaging component", "pattern": "Primary Packaging Component"},
+      {"label": "primary packaging component", "pattern": "Container Closure Component"},
+      {"label": "primary packaging component", "pattern": "PPC"},
+
+      {"label": "printed packaging component", "pattern": "Printed Packaging Component"},
+
+      {"label": "raw material", "pattern": "Raw Material"},
+      {"label": "raw material", "pattern": "RM"},
+
+      {"label": "reagent", "pattern": "Reagent"},
+      {"label": "reagent", "pattern": "Process Reagent"},
+
+      {"label": "analytical reagent", "pattern": "Analytical Reagent"},
+      {"label": "analytical reagent", "pattern": "AR Grade Reagent"},
+      {"label": "analytical reagent", "pattern": "Laboratory Reagent"},
+
+      {"label": "reference standard", "pattern": "Reference Standard"},
+      {"label": "reference standard", "pattern": "Chemical Reference Standard"},
+      {"label": "reference standard", "pattern": "RS"},
+
+      {"label": "secondary packaging component", "pattern": "Secondary Packaging Component"},
+      {"label": "secondary packaging component", "pattern": "SPC"},
+
+      {"label": "solvent", "pattern": "Solvent"},
+      {"label": "solvent", "pattern": "Process Solvent"},
+
+      {"label": "starting material", "pattern": "Starting Material"},
+      {"label": "starting material", "pattern": "Regulatory Starting Material"},
+      {"label": "starting material", "pattern": "SM"},
+
+      {"label": "combination product", "pattern": "Combination Product"},
+      {"label": "combination product", "pattern": "DDCP"},
+      {"label": "combination product", "pattern": "Drug-Device Combination Product"},
+
+      {"label": "device component", "pattern": "Device Component"},
+      {"label": "device component", "pattern": "Device Constituent Part"}
+    ]
+  }
+}
