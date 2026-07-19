@@ -12,8 +12,8 @@ dependencies = [
     "click>=8",
     "scikit-learn>=1.4",        # HDBSCAN available from 1.3+
     "sentence-transformers>=3",
-    "gliner>=0.2",              # zero-shot NER
-    "fastcoref>=2.1",           # coreference resolution (transformer-based, spaCy 3.7 compatible)
+    "gliner2>=0.1",             # zero-shot NER (script 02)
+    "glirel>=0.1",              # zero-shot relation extraction (script 03)
     "boto3>=1.34",              # S3 ingestion (script 00)
     # General English model — no domain-specific packages required.
     "en_core_web_md",

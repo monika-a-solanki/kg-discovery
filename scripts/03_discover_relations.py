@@ -18,7 +18,6 @@ Outputs:
 """
 
 import json
-import os
 import re
 import sys
 from collections import Counter, defaultdict
@@ -28,7 +27,6 @@ import torch
 
 import spacy
 from glirel import GLiREL
-from glirel.model import load_config_as_namespace
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import HDBSCAN
 
@@ -57,11 +55,7 @@ MIN_REL_FREQ = 3
 MIN_CLUSTER_SIZE = 3
 GLIREL_THRESHOLD = 0.3
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-_HF_HOME = os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
-GLIREL_MODEL_PATH = os.path.join(
-    _HF_HOME, "hub", "models--jackboyla--glirel-large-v0", "snapshots",
-    "14ffca16a521322d6f2fbc52d2cf371d2175b309541bc9b74a003b46d909d941"
-)
+GLIREL_MODEL = "jackboyla/glirel-large-v0"
 
 RELATION_LABELS = [
     "located in",
@@ -93,14 +87,9 @@ def log(msg: str) -> None:
 
 
 def load_glirel():
-    """Load GLiREL model manually (workaround for huggingface_hub version mismatch)."""
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    config = load_config_as_namespace(GLIREL_MODEL_PATH + '/glirel_config.json')
-    model = GLiREL(config)
-    state = torch.load(GLIREL_MODEL_PATH + '/pytorch_model.bin', map_location='cpu')
-    model.load_state_dict(state, strict=False)
+    model = GLiREL.from_pretrained(GLIREL_MODEL)
     model.eval()
-    model.float()
     model.to(device)
     return model
 
